@@ -5,6 +5,8 @@ import os from 'os';
 import path from 'path';
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
 import routes from './app/routes';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './docs/swagger';
 
 import cookieParser from 'cookie-parser';
 
@@ -17,6 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
 
 app.use('/api/v1', routes);
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/v1/rfid',
   express.json({ type: ['application/json', 'application/*+json', 'text/plain'] }),
   express.urlencoded({ extended: true }),
