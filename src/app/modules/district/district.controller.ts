@@ -23,6 +23,7 @@ const getAllDistricts = catchAsync(async (req: Request, res: Response) => {
   const rawFilters = pick(req.query, ['searchTerm', 'name']);
   const paginationOptions = pick(req.query, paginationFields);
 
+
   const result = await DistrictService.getAllDistricts(
     rawFilters,
     paginationOptions

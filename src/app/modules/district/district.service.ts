@@ -44,6 +44,7 @@ const getAllDistricts = async (
     sortOrder = 'desc',
   } = paginationHelpers.calculatePagination(paginationOptions);
 
+
   const conditions: string[] = [];
   const values: any[] = [];
   let paramIndex = 1;
