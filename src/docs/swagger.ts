@@ -284,6 +284,242 @@ const definition: OAS3Definition = {
           data: { $ref: '#/components/schemas/School' },
         },
       },
+      Class: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          name: { type: 'string', example: 'Grade 1' },
+          serial_number: { type: 'integer', nullable: true, example: 1 },
+          status: { type: 'string', enum: ['active','inactive'], example: 'active' },
+          school_id: { type: 'integer', example: 1 },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateClassRequest: {
+        type: 'object',
+        required: ['name','status','school_id'],
+        properties: {
+          name: { type: 'string' },
+          serial_number: { type: 'integer', nullable: true },
+          status: { type: 'string', enum: ['active','inactive'] },
+          school_id: { type: 'integer' },
+        },
+      },
+      UpdateClassRequest: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          serial_number: { type: 'integer', nullable: true },
+          status: { type: 'string', enum: ['active','inactive'] },
+        },
+      },
+      Section: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          name: { type: 'string', example: 'A' },
+          serial_number: { type: 'integer', nullable: true, example: 1 },
+          status: { type: 'string', enum: ['active','inactive'], example: 'active' },
+          school_id: { type: 'integer', example: 1 },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateSectionRequest: {
+        type: 'object',
+        required: ['name','status','school_id'],
+        properties: {
+          name: { type: 'string' },
+          serial_number: { type: 'integer', nullable: true },
+          status: { type: 'string', enum: ['active','inactive'] },
+          school_id: { type: 'integer' },
+        },
+      },
+      UpdateSectionRequest: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          serial_number: { type: 'integer', nullable: true },
+          status: { type: 'string', enum: ['active','inactive'] },
+        },
+      },
+      Group: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          name: { type: 'string', example: 'SCIENCE' },
+          serial_number: { type: 'integer', nullable: true, example: 1 },
+          status: { type: 'string', enum: ['active','inactive'], example: 'active' },
+          school_id: { type: 'integer', example: 1 },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateGroupRequest: {
+        type: 'object',
+        required: ['name','status','school_id'],
+        properties: {
+          name: { type: 'string' },
+          serial_number: { type: 'integer', nullable: true },
+          status: { type: 'string', enum: ['active','inactive'] },
+          school_id: { type: 'integer' },
+        },
+      },
+      UpdateGroupRequest: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          serial_number: { type: 'integer', nullable: true },
+          status: { type: 'string', enum: ['active','inactive'] },
+        },
+      },
+      Shift: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          name: { type: 'string', example: 'MORNING' },
+          serial_number: { type: 'integer', nullable: true, example: 1 },
+          status: { type: 'string', enum: ['active','inactive'], example: 'active' },
+          school_id: { type: 'integer', example: 1 },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateShiftRequest: {
+        type: 'object',
+        required: ['name','status','school_id'],
+        properties: {
+          name: { type: 'string' },
+          serial_number: { type: 'integer', nullable: true },
+          status: { type: 'string', enum: ['active','inactive'] },
+          school_id: { type: 'integer' },
+        },
+      },
+      UpdateShiftRequest: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          serial_number: { type: 'integer', nullable: true },
+          status: { type: 'string', enum: ['active','inactive'] },
+        },
+      },
+      Subject: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          name: { type: 'string', example: 'Mathematics' },
+          code: { type: 'string', nullable: true, example: 'MATH-101' },
+          serial_number: { type: 'integer', nullable: true, example: 1 },
+          status: { type: 'string', enum: ['active','inactive'], example: 'active' },
+          school_id: { type: 'integer', example: 1 },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateSubjectRequest: {
+        type: 'object',
+        required: ['name','status','school_id'],
+        properties: {
+          name: { type: 'string' },
+          code: { type: 'string', nullable: true },
+          serial_number: { type: 'integer', nullable: true },
+          status: { type: 'string', enum: ['active','inactive'] },
+          school_id: { type: 'integer' },
+        },
+      },
+      UpdateSubjectRequest: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          code: { type: 'string', nullable: true },
+          serial_number: { type: 'integer', nullable: true },
+          status: { type: 'string', enum: ['active','inactive'] },
+        },
+      },
+      Category: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          name: { type: 'string', example: 'Academic' },
+          serial_number: { type: 'integer', nullable: true, example: 1 },
+          status: { type: 'string', enum: ['active','inactive'], example: 'active' },
+          school_id: { type: 'integer', example: 1 },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateCategoryRequest: {
+        type: 'object',
+        required: ['name','status','school_id'],
+        properties: {
+          name: { type: 'string' },
+          serial_number: { type: 'integer', nullable: true },
+          status: { type: 'string', enum: ['active','inactive'] },
+          school_id: { type: 'integer' },
+        },
+      },
+      UpdateCategoryRequest: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          serial_number: { type: 'integer', nullable: true },
+          status: { type: 'string', enum: ['active','inactive'] },
+        },
+      },
+      ClassExam: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          class_exam_name: { type: 'string', example: 'Half Yearly Exam' },
+          position: { type: 'integer', example: 2 },
+          serial_number: { type: 'integer', nullable: true, example: 2 },
+          status: { type: 'string', enum: ['active','inactive'], example: 'active' },
+          school_id: { type: 'integer', example: 1 },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateClassExamRequest: {
+        type: 'object',
+        required: ['class_exam_name','position','status','school_id'],
+        properties: {
+          class_exam_name: { type: 'string' },
+          position: { type: 'integer' },
+          serial_number: { type: 'integer', nullable: true },
+          status: { type: 'string', enum: ['active','inactive'] },
+          school_id: { type: 'integer' },
+        },
+      },
+      UpdateClassExamRequest: {
+        type: 'object',
+        properties: {
+          class_exam_name: { type: 'string' },
+          position: { type: 'integer' },
+          serial_number: { type: 'integer', nullable: true },
+          status: { type: 'string', enum: ['active','inactive'] },
+        },
+      },
+        ClassGroupAssign: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            school_id: { type: 'integer', example: 1 },
+            class_id: { type: 'integer', example: 5 },
+            group_ids: { type: 'array', items: { type: 'integer' }, nullable: true, example: [1,2,3] },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
+        UpsertClassGroupRequest: {
+          type: 'object',
+          required: ['school_id','class_id'],
+          properties: {
+            school_id: { type: 'integer' },
+            class_id: { type: 'integer' },
+            group_ids: { type: 'array', items: { type: 'integer' }, nullable: true },
+          },
+        },
     },
   },
   paths: {
@@ -808,6 +1044,144 @@ const definition: OAS3Definition = {
         },
       },
     },
+    '/basic-setting/classes': {
+      get: {
+        tags: ['Class'],
+        summary: 'List classes',
+        parameters: [
+          { in: 'query', name: 'school_id', schema: { type: 'integer', minimum: 1 } },
+          { in: 'query', name: 'status', schema: { type: 'string', enum: ['active','inactive'] } },
+          { in: 'query', name: 'searchTerm', schema: { type: 'string' } },
+          { in: 'query', name: 'page', schema: { type: 'integer', minimum: 1 } },
+          { in: 'query', name: 'limit', schema: { type: 'integer', minimum: 1 } },
+          { in: 'query', name: 'sortBy', schema: { type: 'string' } },
+          { in: 'query', name: 'sortOrder', schema: { type: 'string', enum: ['asc','desc'] } },
+        ],
+        responses: {
+          200: {
+            description: 'Classes retrieved successfully',
+            content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, meta: { $ref: '#/components/schemas/PaginationMeta' }, data: { type: 'array', items: { $ref: '#/components/schemas/Class' } } } } } },
+          },
+        },
+      },
+      post: {
+        tags: ['Class'],
+        summary: 'Create class',
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateClassRequest' } } } },
+        responses: { 201: { description: 'Class created successfully', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Class' } } } } } } },
+      },
+    },
+    '/basic-setting/classes/{id}': {
+      get: { tags: ['Class'], summary: 'Get class', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], responses: { 200: { description: 'OK', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Class' } } } } } } } },
+      patch: { tags: ['Class'], summary: 'Update class', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateClassRequest' } } } }, responses: { 200: { description: 'Updated', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Class' } } } } } } } },
+      delete: { tags: ['Class'], summary: 'Delete class', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], responses: { 200: { description: 'Deleted', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' } } } } } } } },
+    },
+    '/basic-setting/sections': {
+      get: { tags: ['Section'], summary: 'List sections', parameters: [ { in: 'query', name: 'school_id', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'status', schema: { type: 'string', enum: ['active','inactive'] } }, { in: 'query', name: 'searchTerm', schema: { type: 'string' } }, { in: 'query', name: 'page', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'limit', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'sortBy', schema: { type: 'string' } }, { in: 'query', name: 'sortOrder', schema: { type: 'string', enum: ['asc','desc'] } } ], responses: { 200: { description: 'Sections retrieved successfully', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, meta: { $ref: '#/components/schemas/PaginationMeta' }, data: { type: 'array', items: { $ref: '#/components/schemas/Section' } } } } } } } } },
+      post: { tags: ['Section'], summary: 'Create section', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateSectionRequest' } } } }, responses: { 201: { description: 'Section created successfully', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Section' } } } } } } } },
+    },
+    '/basic-setting/sections/{id}': {
+      get: { tags: ['Section'], summary: 'Get section', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], responses: { 200: { description: 'OK', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Section' } } } } } } } },
+      patch: { tags: ['Section'], summary: 'Update section', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateSectionRequest' } } } }, responses: { 200: { description: 'Updated', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Section' } } } } } } } },
+      delete: { tags: ['Section'], summary: 'Delete section', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], responses: { 200: { description: 'Deleted', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' } } } } } } } },
+    },
+    '/basic-setting/groups': {
+      get: { tags: ['Group'], summary: 'List groups', parameters: [ { in: 'query', name: 'school_id', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'status', schema: { type: 'string', enum: ['active','inactive'] } }, { in: 'query', name: 'searchTerm', schema: { type: 'string' } }, { in: 'query', name: 'page', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'limit', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'sortBy', schema: { type: 'string' } }, { in: 'query', name: 'sortOrder', schema: { type: 'string', enum: ['asc','desc'] } } ], responses: { 200: { description: 'Groups retrieved successfully', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, meta: { $ref: '#/components/schemas/PaginationMeta' }, data: { type: 'array', items: { $ref: '#/components/schemas/Group' } } } } } } } } },
+      post: { tags: ['Group'], summary: 'Create group', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateGroupRequest' } } } }, responses: { 201: { description: 'Group created successfully', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Group' } } } } } } } },
+    },
+    '/basic-setting/groups/{id}': {
+      get: { tags: ['Group'], summary: 'Get group', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], responses: { 200: { description: 'OK', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Group' } } } } } } } },
+      patch: { tags: ['Group'], summary: 'Update group', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateGroupRequest' } } } }, responses: { 200: { description: 'Updated', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Group' } } } } } } } },
+      delete: { tags: ['Group'], summary: 'Delete group', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], responses: { 200: { description: 'Deleted', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' } } } } } } } },
+    },
+    '/basic-setting/shifts': {
+      get: { tags: ['Shift'], summary: 'List shifts', parameters: [ { in: 'query', name: 'school_id', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'status', schema: { type: 'string', enum: ['active','inactive'] } }, { in: 'query', name: 'searchTerm', schema: { type: 'string' } }, { in: 'query', name: 'page', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'limit', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'sortBy', schema: { type: 'string' } }, { in: 'query', name: 'sortOrder', schema: { type: 'string', enum: ['asc','desc'] } } ], responses: { 200: { description: 'Shifts retrieved successfully', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, meta: { $ref: '#/components/schemas/PaginationMeta' }, data: { type: 'array', items: { $ref: '#/components/schemas/Shift' } } } } } } } } },
+      post: { tags: ['Shift'], summary: 'Create shift', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateShiftRequest' } } } }, responses: { 201: { description: 'Shift created successfully', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Shift' } } } } } } } },
+    },
+    '/basic-setting/shifts/{id}': {
+      get: { tags: ['Shift'], summary: 'Get shift', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], responses: { 200: { description: 'OK', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Shift' } } } } } } } },
+      patch: { tags: ['Shift'], summary: 'Update shift', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateShiftRequest' } } } }, responses: { 200: { description: 'Updated', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Shift' } } } } } } } },
+      delete: { tags: ['Shift'], summary: 'Delete shift', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], responses: { 200: { description: 'Deleted', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' } } } } } } } },
+    },
+    '/basic-setting/subjects': {
+      get: { tags: ['Subject'], summary: 'List subjects', parameters: [ { in: 'query', name: 'school_id', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'status', schema: { type: 'string', enum: ['active','inactive'] } }, { in: 'query', name: 'searchTerm', schema: { type: 'string' } }, { in: 'query', name: 'page', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'limit', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'sortBy', schema: { type: 'string' } }, { in: 'query', name: 'sortOrder', schema: { type: 'string', enum: ['asc','desc'] } } ], responses: { 200: { description: 'Subjects retrieved successfully', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, meta: { $ref: '#/components/schemas/PaginationMeta' }, data: { type: 'array', items: { $ref: '#/components/schemas/Subject' } } } } } } } } },
+      post: { tags: ['Subject'], summary: 'Create subject', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateSubjectRequest' } } } }, responses: { 201: { description: 'Subject created successfully', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Subject' } } } } } } } },
+    },
+    '/basic-setting/subjects/{id}': {
+      get: { tags: ['Subject'], summary: 'Get subject', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], responses: { 200: { description: 'OK', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Subject' } } } } } } } },
+      patch: { tags: ['Subject'], summary: 'Update subject', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateSubjectRequest' } } } }, responses: { 200: { description: 'Updated', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Subject' } } } } } } } },
+      delete: { tags: ['Subject'], summary: 'Delete subject', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], responses: { 200: { description: 'Deleted', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' } } } } } } } },
+    },
+    '/basic-setting/categories': {
+      get: { tags: ['Category'], summary: 'List categories', parameters: [ { in: 'query', name: 'school_id', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'status', schema: { type: 'string', enum: ['active','inactive'] } }, { in: 'query', name: 'searchTerm', schema: { type: 'string' } }, { in: 'query', name: 'page', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'limit', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'sortBy', schema: { type: 'string' } }, { in: 'query', name: 'sortOrder', schema: { type: 'string', enum: ['asc','desc'] } } ], responses: { 200: { description: 'Categories retrieved successfully', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, meta: { $ref: '#/components/schemas/PaginationMeta' }, data: { type: 'array', items: { $ref: '#/components/schemas/Category' } } } } } } } } },
+      post: { tags: ['Category'], summary: 'Create category', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateCategoryRequest' } } } }, responses: { 201: { description: 'Category created successfully', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Category' } } } } } } } },
+    },
+    '/basic-setting/categories/{id}': {
+      get: { tags: ['Category'], summary: 'Get category', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], responses: { 200: { description: 'OK', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Category' } } } } } } } },
+      patch: { tags: ['Category'], summary: 'Update category', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateCategoryRequest' } } } }, responses: { 200: { description: 'Updated', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/Category' } } } } } } } },
+      delete: { tags: ['Category'], summary: 'Delete category', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], responses: { 200: { description: 'Deleted', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' } } } } } } } },
+    },
+    '/basic-setting/class-exams': {
+      get: { tags: ['ClassExam'], summary: 'List class exams', parameters: [ { in: 'query', name: 'school_id', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'status', schema: { type: 'string', enum: ['active','inactive'] } }, { in: 'query', name: 'searchTerm', schema: { type: 'string' } }, { in: 'query', name: 'page', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'limit', schema: { type: 'integer', minimum: 1 } }, { in: 'query', name: 'sortBy', schema: { type: 'string' } }, { in: 'query', name: 'sortOrder', schema: { type: 'string', enum: ['asc','desc'] } } ], responses: { 200: { description: 'Class exams retrieved successfully', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, meta: { $ref: '#/components/schemas/PaginationMeta' }, data: { type: 'array', items: { $ref: '#/components/schemas/ClassExam' } } } } } } } } },
+      post: { tags: ['ClassExam'], summary: 'Create class exam', requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateClassExamRequest' } } } }, responses: { 201: { description: 'Class exam created successfully', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/ClassExam' } } } } } } } },
+    },
+    '/basic-setting/class-exams/{id}': {
+      get: { tags: ['ClassExam'], summary: 'Get class exam', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], responses: { 200: { description: 'OK', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/ClassExam' } } } } } } } },
+      patch: { tags: ['ClassExam'], summary: 'Update class exam', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateClassExamRequest' } } } }, responses: { 200: { description: 'Updated', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: { $ref: '#/components/schemas/ClassExam' } } } } } } } },
+      delete: { tags: ['ClassExam'], summary: 'Delete class exam', parameters: [ { in: 'path', name: 'id', required: true, schema: { type: 'integer', minimum: 1 } } ], responses: { 200: { description: 'Deleted', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' } } } } } } } },
+    },
+      '/basic-setting/class-groups': {
+        get: {
+          tags: ['ClassGroup'],
+          summary: 'Get class-wise group assignment',
+          parameters: [
+            { in: 'query', name: 'school_id', required: true, schema: { type: 'integer', minimum: 1 } },
+            { in: 'query', name: 'class_id', required: true, schema: { type: 'integer', minimum: 1 } },
+          ],
+          responses: {
+            200: {
+              description: 'Assignment fetched',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      message: { type: 'string' },
+                      data: { oneOf: [ { $ref: '#/components/schemas/ClassGroupAssign' }, { type: 'null' } ] },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        post: {
+          tags: ['ClassGroup'],
+          summary: 'Create or update class-wise group assignment',
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/UpsertClassGroupRequest' } } },
+          },
+          responses: {
+            200: {
+              description: 'Assignment saved',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      message: { type: 'string' },
+                      data: { $ref: '#/components/schemas/ClassGroupAssign' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
   },
 };
 
