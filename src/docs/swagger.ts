@@ -11,7 +11,76 @@ const definition: OAS3Definition = {
     { url: 'http://localhost:5000/api/v1', description: 'Base API' },
   ],
   components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+    },
     schemas: {
+      SchoolUser: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          name: { type: 'string', example: 'John Doe' },
+          email: { type: 'string', nullable: true, example: 'john@example.com' },
+          username: { type: 'string', example: 'johndoe' },
+          mobile_no: { type: 'string', example: '+8801700000000' },
+          photo: { type: 'string', nullable: true, example: 'https://example.com/photo.jpg' },
+          school_id: { type: 'integer', example: 1 },
+          address: { type: 'string', nullable: true, example: 'Dhaka, Bangladesh' },
+          role: {
+            type: 'string',
+            example: 'school_admin',
+            enum: ['school_super_admin', 'school_admin', 'admin', 'user'],
+          },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+        },
+      },
+      RegisterSchoolUserRequest: {
+        type: 'object',
+        required: ['name', 'password', 'username', 'mobile_no', 'school_id'],
+        properties: {
+          name: { type: 'string', example: 'John Doe' },
+          email: { type: 'string', nullable: true, example: 'john@example.com' },
+          password: { type: 'string', example: 'StrongPassword123' },
+          username: { type: 'string', example: 'johndoe' },
+          mobile_no: { type: 'string', example: '+8801700000000' },
+          photo: { type: 'string', nullable: true, example: 'https://example.com/photo.jpg' },
+          school_id: { type: 'integer', example: 1 },
+          address: { type: 'string', nullable: true, example: 'Dhaka, Bangladesh' },
+          role: {
+            type: 'string',
+            example: 'school_admin',
+            enum: ['school_super_admin', 'school_admin', 'admin', 'user'],
+          },
+        },
+      },
+      LoginRequest: {
+        type: 'object',
+        required: ['usernameOrMobile', 'password'],
+        properties: {
+          usernameOrMobile: { type: 'string', example: 'johndoe' },
+          password: { type: 'string', example: 'StrongPassword123' },
+        },
+      },
+      LoginResponseData: {
+        type: 'object',
+        properties: {
+          accessToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
+          user: { $ref: '#/components/schemas/SchoolUser' },
+        },
+      },
+      LoginResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          message: { type: 'string', example: 'Login successful' },
+          data: { $ref: '#/components/schemas/LoginResponseData' },
+        },
+      },
       District: {
         type: 'object',
         properties: {
@@ -218,6 +287,74 @@ const definition: OAS3Definition = {
     },
   },
   paths: {
+    '/auth/register': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Register a new school user',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RegisterSchoolUserRequest' },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'User created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'User created successfully' },
+                    data: { $ref: '#/components/schemas/SchoolUser' },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'Invalid input' },
+          409: { description: 'Username already exists' },
+        },
+      },
+    },
+    '/auth/login': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Login with username or mobile and password',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/LoginRequest' },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Login successful',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/LoginResponse' },
+              },
+            },
+          },
+          401: { description: 'Invalid credentials' },
+        },
+      },
+    },
+    '/auth/logout': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Logout (stateless)',
+        description: 'For stateless JWT auth, logout is client-side. This endpoint can be used for future blacklisting.',
+        responses: {
+          200: { description: 'Logout successful' },
+        },
+      },
+    },
     '/districts': {
       get: {
         tags: ['District'],
