@@ -18,6 +18,7 @@ import { DesignationRoutes } from '../modules/basic-setting/designation/designat
 import { DepartmentRoutes } from '../modules/basic-setting/department/department.route';
 import { AcademicYearRoutes } from '../modules/basic-setting/academic-year/academicYear.route';
 import { AcademicSessionRoutes } from '../modules/basic-setting/academic-session/academicSession.route';
+import ClassPeriodRoutes from '../modules/basic-setting/class-period/classPeriod.route';
 
 
 const router = express.Router();
@@ -98,6 +99,10 @@ const moduleRoutes = [
  {
    path:'/basic-setting/academic-sessions',
    routes:AcademicSessionRoutes
+ },
+ {
+   path:'/basic-setting/class-periods',
+   routes:ClassPeriodRoutes
  }
 ];
 
