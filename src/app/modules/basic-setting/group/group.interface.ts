@@ -7,5 +7,3 @@ export type IGroup = {
   created_at?: string;
   updated_at?: string;
 };
-
-

@@ -7,5 +7,3 @@ export type IShift = {
   created_at?: string;
   updated_at?: string;
 };
-
-

@@ -83,5 +83,3 @@ export const GroupController = {
   updateGroup,
   deleteGroup,
 };
-
-

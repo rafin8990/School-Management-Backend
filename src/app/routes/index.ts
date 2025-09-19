@@ -7,6 +7,7 @@ import { ClassRoutes } from '../modules/basic-setting/class/class.route';
 import { SectionRoutes } from '../modules/basic-setting/section/section.route';
 import { GroupRoutes } from '../modules/basic-setting/group/group.route';
 import { ShiftRoutes } from '../modules/basic-setting/shift/shift.route';
+import { ClassAssignmentRoutes } from '../modules/basic-setting/class-assignment/class-assignment.route';
 import { SubjectRoutes } from '../modules/basic-setting/subject/subject.route';
 import { CategoryRoutes } from '../modules/basic-setting/category/category.route';
 import { ClassExamRoutes } from '../modules/basic-setting/class-exam/classExam.route';
@@ -19,6 +20,7 @@ import { DepartmentRoutes } from '../modules/basic-setting/department/department
 import { AcademicYearRoutes } from '../modules/basic-setting/academic-year/academicYear.route';
 import { AcademicSessionRoutes } from '../modules/basic-setting/academic-session/academicSession.route';
 import ClassPeriodRoutes from '../modules/basic-setting/class-period/classPeriod.route';
+import { StudentRoutes } from '../modules/student/student.route';
 
 
 const router = express.Router();
@@ -81,6 +83,10 @@ const moduleRoutes = [
    routes:ClassShiftRoutes
  },
  {
+   path:'/basic-setting/class-assignments',
+   routes:ClassAssignmentRoutes
+ },
+ {
    path:'/basic-setting/board-exams',
    routes:BoardExamRoutes
  },
@@ -103,6 +109,10 @@ const moduleRoutes = [
  {
    path:'/basic-setting/class-periods',
    routes:ClassPeriodRoutes
+ },
+ {
+   path:'/students',
+   routes:StudentRoutes
  }
 ];
 

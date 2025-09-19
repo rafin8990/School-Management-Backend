@@ -7,5 +7,3 @@ export type ISection = {
   created_at?: string;
   updated_at?: string;
 };
-
-

@@ -50,41 +50,48 @@ const getAllShifts = async (
     sortOrder = 'desc',
   } = paginationHelpers.calculatePagination(paginationOptions);
 
-  const conditions: string[] = [];
-  const values: any[] = [];
-  let paramIndex = 1;
+  let whereConditions = [];
+  let queryParams = [];
+  let paramCount = 1;
 
+  // Add search term
   if (searchTerm) {
-    conditions.push(`(s.name ILIKE $${paramIndex})`);
-    values.push(`%${searchTerm}%`);
-    paramIndex++;
+    whereConditions.push(`name ILIKE $${paramCount}`);
+    queryParams.push(`%${searchTerm}%`);
+    paramCount++;
   }
 
-  for (const [field, value] of Object.entries(filterFields)) {
-    if (value !== undefined && value !== null) {
-      conditions.push(`s.${field} = $${paramIndex}`);
-      values.push(value);
-      paramIndex++;
+  // Add filter fields
+  Object.entries(filterFields).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      whereConditions.push(`${key} = $${paramCount}`);
+      queryParams.push(value);
+      paramCount++;
     }
-  }
+  });
 
-  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
-  const query = `
-    SELECT s.*
-    FROM shift s
+  // Build query
+  let query = `
+    SELECT * FROM shift
     ${whereClause}
-    ORDER BY s.${sortBy} ${sortOrder}
-    LIMIT $${paramIndex++} OFFSET $${paramIndex};
+    ORDER BY ${sortBy} ${sortOrder}
+    LIMIT $${paramCount} OFFSET $${paramCount + 1}
   `;
 
-  values.push(limit, skip);
+  queryParams.push(limit, skip);
 
-  const result = await pool.query(query, values);
+  const result = await pool.query(query, queryParams);
 
-  const countQuery = `SELECT COUNT(*) FROM shift s ${whereClause};`;
-  const countResult = await pool.query(countQuery, values.slice(0, paramIndex - 2));
-  const total = parseInt(countResult.rows[0].count, 10);
+  // Get total count
+  const countQuery = `
+    SELECT COUNT(*) as total FROM shift
+    ${whereClause}
+  `;
+
+  const countResult = await pool.query(countQuery, queryParams.slice(0, -2));
+  const total = parseInt(countResult.rows[0].total);
 
   return {
     meta: {
@@ -100,13 +107,14 @@ const getAllShifts = async (
 };
 
 const getSingleShift = async (id: number): Promise<IShift | null> => {
-  const query = `
-    SELECT s.*
-    FROM shift s
-    WHERE s.id = $1;
-  `;
+  const query = 'SELECT * FROM shift WHERE id = $1';
   const result = await pool.query(query, [id]);
-  return result.rows[0] || null;
+
+  if (result.rows.length === 0) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Shift not found');
+  }
+
+  return result.rows[0];
 };
 
 const updateShift = async (id: number, data: Partial<IShift>): Promise<IShift | null> => {
@@ -114,15 +122,15 @@ const updateShift = async (id: number, data: Partial<IShift>): Promise<IShift | 
   try {
     await client.query('BEGIN');
 
-    const updateFields: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
+    const updateFields = [];
+    const values = [];
+    let paramCount = 1;
 
     Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined) {
-        updateFields.push(`${key} = $${paramIndex}`);
+      if (value !== undefined && value !== null) {
+        updateFields.push(`${key} = $${paramCount}`);
         values.push(value);
-        paramIndex++;
+        paramCount++;
       }
     });
 
@@ -130,14 +138,14 @@ const updateShift = async (id: number, data: Partial<IShift>): Promise<IShift | 
       throw new ApiError(httpStatus.BAD_REQUEST, 'No fields to update');
     }
 
+    values.push(id);
     const query = `
-      UPDATE shift 
+      UPDATE shift
       SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $${paramIndex}
-      RETURNING *;
+      WHERE id = $${paramCount}
+      RETURNING *
     `;
 
-    values.push(id);
     const result = await client.query(query, values);
 
     if (result.rows.length === 0) {
@@ -159,10 +167,10 @@ const deleteShift = async (id: number): Promise<void> => {
   try {
     await client.query('BEGIN');
 
-    const query = 'DELETE FROM shift WHERE id = $1 RETURNING *;';
+    const query = 'DELETE FROM shift WHERE id = $1';
     const result = await client.query(query, [id]);
 
-    if (result.rows.length === 0) {
+    if (result.rowCount === 0) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Shift not found');
     }
 
@@ -182,5 +190,3 @@ export const ShiftService = {
   updateShift,
   deleteShift,
 };
-
-

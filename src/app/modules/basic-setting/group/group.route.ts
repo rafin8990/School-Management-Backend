@@ -36,5 +36,3 @@ router.delete(
 );
 
 export const GroupRoutes = router;
-
-

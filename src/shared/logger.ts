@@ -14,7 +14,7 @@ const myFormat = printf(({ level, message, label, timestamp }) => {
 
 const logger = createLogger({
   level: 'info',
-  format: combine(label({ label: 'GP Warehouse' }), timestamp(), myFormat),
+  format: combine(label({ label: 'School Management' }), timestamp(), myFormat),
   transports: [
     new transports.Console(),
     new DailyRotateFile({
@@ -23,7 +23,7 @@ const logger = createLogger({
         'logs',
         'winston',
         'successes',
-        'GP Warehouse-%DATE%-success.log'
+        'School Management-%DATE%-success.log'
       ),
       datePattern: 'YYYY-DD-MM-HH',
       zippedArchive: true,
@@ -35,7 +35,7 @@ const logger = createLogger({
 
 const errorlogger = createLogger({
   level: 'error',
-  format: combine(label({ label: 'GP Warehouse' }), timestamp(), myFormat),
+  format: combine(label({ label: 'School Management' }), timestamp(), myFormat),
   transports: [
     new transports.Console(),
     new DailyRotateFile({
@@ -44,7 +44,7 @@ const errorlogger = createLogger({
         'logs',
         'winston',
         'errors',
-        'GP Warehouse-%DATE%-error.log'
+        'School Management-%DATE%-error.log'
       ),
       datePattern: 'YYYY-DD-MM-HH',
       zippedArchive: true,

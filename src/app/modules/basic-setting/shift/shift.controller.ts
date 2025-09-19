@@ -83,5 +83,3 @@ export const ShiftController = {
   updateShift,
   deleteShift,
 };
-
-

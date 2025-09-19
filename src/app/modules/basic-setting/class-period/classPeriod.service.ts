@@ -1,6 +1,5 @@
 import pool from '../../../../utils/dbClient';
 import { IClassPeriod, PaginatedResponse } from './classPeriod.interface';
-import { paginationHelper } from '../../../../helpers/paginationHelper';
 
 const createClassPeriod = async (data: IClassPeriod): Promise<IClassPeriod> => {
   const { name, serial_number, school_id, status } = data;
@@ -143,8 +142,8 @@ const deleteClassPeriod = async (id: number): Promise<boolean> => {
     'DELETE FROM class_period WHERE id = $1',
     [id]
   );
-  
-  return result.rowCount > 0;
+
+  return (result.rowCount ?? 0) > 0;
 };
 
 export const ClassPeriodService = {
