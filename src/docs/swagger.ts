@@ -81,6 +81,14 @@ const definition: OAS3Definition = {
           data: { $ref: '#/components/schemas/LoginResponseData' },
         },
       },
+      GetLoggedInUserResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          message: { type: 'string', example: 'User retrieved successfully' },
+          data: { $ref: '#/components/schemas/SchoolUser' },
+        },
+      },
       District: {
         type: 'object',
         properties: {
@@ -915,6 +923,26 @@ const definition: OAS3Definition = {
         description: 'For stateless JWT auth, logout is client-side. This endpoint can be used for future blacklisting.',
         responses: {
           200: { description: 'Logout successful' },
+        },
+      },
+    },
+    '/auth/me': {
+      get: {
+        tags: ['Auth'],
+        summary: 'Get logged in user profile',
+        description: 'Retrieve the profile information of the currently authenticated user',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: {
+            description: 'User profile retrieved successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/GetLoggedInUserResponse' },
+              },
+            },
+          },
+          401: { description: 'Unauthorized - Invalid or missing token' },
+          404: { description: 'User not found' },
         },
       },
     },

@@ -33,6 +33,16 @@ export const AuthController = {
       data: null,
     });
   }),
+
+  getLoggedInUser: catchAsync(async (req, res) => {
+    const result = await AuthService.getLoggedInUser(req.user!.id);
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'User retrieved successfully',
+      data: result,
+    });
+  }),
 };
 
 

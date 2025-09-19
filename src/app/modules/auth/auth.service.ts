@@ -80,6 +80,22 @@ export const AuthService = {
       },
     };
   },
+
+  async getLoggedInUser(userId: number) {
+    const userRes = await pool.query(
+      `SELECT id, name, email, username, mobile_no, photo, school_id, address, role, created_at, updated_at
+       FROM school_user
+       WHERE id = $1
+       LIMIT 1`,
+      [userId]
+    );
+
+    if (userRes.rowCount === 0) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+    }
+
+    return userRes.rows[0];
+  },
 };
 
 
