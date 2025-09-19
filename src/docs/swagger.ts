@@ -520,6 +520,333 @@ const definition: OAS3Definition = {
             group_ids: { type: 'array', items: { type: 'integer' }, nullable: true },
           },
         },
+        ClassSectionAssign: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            school_id: { type: 'integer', example: 1 },
+            class_id: { type: 'integer', example: 5 },
+            section_ids: { type: 'array', items: { type: 'integer' }, nullable: true, example: [1,2,3] },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
+        UpsertClassSectionRequest: {
+          type: 'object',
+          required: ['school_id','class_id'],
+          properties: {
+            school_id: { type: 'integer' },
+            class_id: { type: 'integer' },
+            section_ids: { type: 'array', items: { type: 'integer' }, nullable: true },
+          },
+        },
+        ClassShiftAssign: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            school_id: { type: 'integer', example: 1 },
+            class_id: { type: 'integer', example: 5 },
+            shift_ids: { type: 'array', items: { type: 'integer' }, nullable: true, example: [1,2,3] },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
+        UpsertClassShiftRequest: {
+          type: 'object',
+          required: ['school_id','class_id'],
+          properties: {
+            school_id: { type: 'integer' },
+            class_id: { type: 'integer' },
+            shift_ids: { type: 'array', items: { type: 'integer' }, nullable: true },
+          },
+        },
+        // Board Exam Schemas
+        BoardExam: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            name: { type: 'string', example: 'SSC Exam' },
+            serial_number: { type: 'integer', nullable: true, example: 1 },
+            school_id: { type: 'integer', example: 1 },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
+        CreateBoardExamRequest: {
+          type: 'object',
+          required: ['name', 'school_id'],
+          properties: {
+            name: { type: 'string', example: 'SSC Exam' },
+            serial_number: { type: 'integer', nullable: true, example: 1 },
+            school_id: { type: 'integer', example: 1 },
+          },
+        },
+        UpdateBoardExamRequest: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', example: 'SSC Exam' },
+            serial_number: { type: 'integer', nullable: true, example: 1 },
+          },
+        },
+        PaginatedBoardExamResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+            meta: {
+              type: 'object',
+              properties: {
+                page: { type: 'integer' },
+                limit: { type: 'integer' },
+                total: { type: 'integer' },
+                totalPages: { type: 'integer' },
+                hasNext: { type: 'boolean' },
+                hasPrev: { type: 'boolean' },
+              },
+            },
+            data: { type: 'array', items: { $ref: '#/components/schemas/BoardExam' } },
+          },
+        },
+        SingleBoardExamResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+            data: { $ref: '#/components/schemas/BoardExam' },
+          },
+        },
+        // Designation Schemas
+        Designation: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            name: { type: 'string', example: 'Principal' },
+            serial_number: { type: 'integer', nullable: true, example: 1 },
+            school_id: { type: 'integer', example: 1 },
+            status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
+        CreateDesignationRequest: {
+          type: 'object',
+          required: ['name', 'school_id', 'status'],
+          properties: {
+            name: { type: 'string', example: 'Principal' },
+            serial_number: { type: 'integer', nullable: true, example: 1 },
+            school_id: { type: 'integer', example: 1 },
+            status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+          },
+        },
+        UpdateDesignationRequest: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', example: 'Principal' },
+            serial_number: { type: 'integer', nullable: true, example: 1 },
+            status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+          },
+        },
+        PaginatedDesignationResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+            meta: {
+              type: 'object',
+              properties: {
+                page: { type: 'integer' },
+                limit: { type: 'integer' },
+                total: { type: 'integer' },
+                totalPages: { type: 'integer' },
+                hasNext: { type: 'boolean' },
+                hasPrev: { type: 'boolean' },
+              },
+            },
+            data: { type: 'array', items: { $ref: '#/components/schemas/Designation' } },
+          },
+        },
+        SingleDesignationResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+            data: { $ref: '#/components/schemas/Designation' },
+          },
+        },
+        // Department Schemas
+        Department: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            name: { type: 'string', example: 'Science' },
+            serial_number: { type: 'integer', nullable: true, example: 1 },
+            school_id: { type: 'integer', example: 1 },
+            status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
+        CreateDepartmentRequest: {
+          type: 'object',
+          required: ['name', 'school_id', 'status'],
+          properties: {
+            name: { type: 'string', example: 'Science' },
+            serial_number: { type: 'integer', nullable: true, example: 1 },
+            school_id: { type: 'integer', example: 1 },
+            status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+          },
+        },
+        UpdateDepartmentRequest: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', example: 'Science' },
+            serial_number: { type: 'integer', nullable: true, example: 1 },
+            status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+          },
+        },
+        PaginatedDepartmentResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+            meta: {
+              type: 'object',
+              properties: {
+                page: { type: 'integer' },
+                limit: { type: 'integer' },
+                total: { type: 'integer' },
+                totalPages: { type: 'integer' },
+                hasNext: { type: 'boolean' },
+                hasPrev: { type: 'boolean' },
+              },
+            },
+            data: { type: 'array', items: { $ref: '#/components/schemas/Department' } },
+          },
+        },
+        SingleDepartmentResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+            data: { $ref: '#/components/schemas/Department' },
+          },
+        },
+        // Academic Year Schemas
+        AcademicYear: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            name: { type: 'integer', example: 2024 },
+            serial_number: { type: 'integer', nullable: true, example: 1 },
+            school_id: { type: 'integer', example: 1 },
+            status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
+        CreateAcademicYearRequest: {
+          type: 'object',
+          required: ['name', 'school_id', 'status'],
+          properties: {
+            name: { type: 'integer', example: 2024 },
+            serial_number: { type: 'integer', nullable: true, example: 1 },
+            school_id: { type: 'integer', example: 1 },
+            status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+          },
+        },
+        UpdateAcademicYearRequest: {
+          type: 'object',
+          properties: {
+            name: { type: 'integer', example: 2024 },
+            serial_number: { type: 'integer', nullable: true, example: 1 },
+            status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+          },
+        },
+        PaginatedAcademicYearResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+            meta: {
+              type: 'object',
+              properties: {
+                page: { type: 'integer' },
+                limit: { type: 'integer' },
+                total: { type: 'integer' },
+                totalPages: { type: 'integer' },
+                hasNext: { type: 'boolean' },
+                hasPrev: { type: 'boolean' },
+              },
+            },
+            data: { type: 'array', items: { $ref: '#/components/schemas/AcademicYear' } },
+          },
+        },
+        SingleAcademicYearResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+            data: { $ref: '#/components/schemas/AcademicYear' },
+          },
+        },
+        // Academic Session Schemas
+        AcademicSession: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            name: { type: 'string', example: '2024-2025' },
+            serial_number: { type: 'integer', nullable: true, example: 1 },
+            school_id: { type: 'integer', example: 1 },
+            status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
+        CreateAcademicSessionRequest: {
+          type: 'object',
+          required: ['name', 'school_id', 'status'],
+          properties: {
+            name: { type: 'string', example: '2024-2025' },
+            serial_number: { type: 'integer', nullable: true, example: 1 },
+            school_id: { type: 'integer', example: 1 },
+            status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+          },
+        },
+        UpdateAcademicSessionRequest: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', example: '2024-2025' },
+            serial_number: { type: 'integer', nullable: true, example: 1 },
+            status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+          },
+        },
+        PaginatedAcademicSessionResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+            meta: {
+              type: 'object',
+              properties: {
+                page: { type: 'integer' },
+                limit: { type: 'integer' },
+                total: { type: 'integer' },
+                totalPages: { type: 'integer' },
+                hasNext: { type: 'boolean' },
+                hasPrev: { type: 'boolean' },
+              },
+            },
+            data: { type: 'array', items: { $ref: '#/components/schemas/AcademicSession' } },
+          },
+        },
+        SingleAcademicSessionResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+            data: { $ref: '#/components/schemas/AcademicSession' },
+          },
+        },
     },
   },
   paths: {
@@ -1174,6 +1501,539 @@ const definition: OAS3Definition = {
                       success: { type: 'boolean' },
                       message: { type: 'string' },
                       data: { $ref: '#/components/schemas/ClassGroupAssign' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '/basic-setting/class-sections': {
+        get: {
+          tags: ['ClassSection'],
+          summary: 'Get class-wise section assignment',
+          parameters: [
+            { in: 'query', name: 'school_id', required: true, schema: { type: 'integer', minimum: 1 } },
+            { in: 'query', name: 'class_id', required: true, schema: { type: 'integer', minimum: 1 } },
+          ],
+          responses: {
+            200: {
+              description: 'Assignment fetched',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      message: { type: 'string' },
+                      data: { oneOf: [ { $ref: '#/components/schemas/ClassSectionAssign' }, { type: 'null' } ] },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        post: {
+          tags: ['ClassSection'],
+          summary: 'Create or update class-wise section assignment',
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/UpsertClassSectionRequest' } } },
+          },
+          responses: {
+            200: {
+              description: 'Assignment saved',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      message: { type: 'string' },
+                      data: { $ref: '#/components/schemas/ClassSectionAssign' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '/basic-setting/class-shifts': {
+        get: {
+          tags: ['ClassShift'],
+          summary: 'Get class-wise shift assignment',
+          parameters: [
+            { in: 'query', name: 'school_id', required: true, schema: { type: 'integer', minimum: 1 } },
+            { in: 'query', name: 'class_id', required: true, schema: { type: 'integer', minimum: 1 } },
+          ],
+          responses: {
+            200: {
+              description: 'Assignment fetched',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      message: { type: 'string' },
+                      data: { oneOf: [ { $ref: '#/components/schemas/ClassShiftAssign' }, { type: 'null' } ] },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        post: {
+          tags: ['ClassShift'],
+          summary: 'Create or update class-wise shift assignment',
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/UpsertClassShiftRequest' } } },
+          },
+          responses: {
+            200: {
+              description: 'Assignment saved',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      message: { type: 'string' },
+                      data: { $ref: '#/components/schemas/ClassShiftAssign' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      // Board Exam API Paths
+      '/basic-setting/board-exams': {
+        get: {
+          tags: ['BoardExam'],
+          summary: 'Get all board exams',
+          parameters: [
+            { in: 'query', name: 'page', schema: { type: 'integer', minimum: 1 }, description: 'Page number' },
+            { in: 'query', name: 'limit', schema: { type: 'integer', minimum: 1 }, description: 'Number of items per page' },
+            { in: 'query', name: 'searchTerm', schema: { type: 'string' }, description: 'Search term for name' },
+            { in: 'query', name: 'name', schema: { type: 'string' }, description: 'Filter by name' },
+            { in: 'query', name: 'school_id', required: true, schema: { type: 'integer', minimum: 1 }, description: 'School ID' },
+            { in: 'query', name: 'sortBy', schema: { type: 'string' }, description: 'Sort field' },
+            { in: 'query', name: 'sortOrder', schema: { type: 'string', enum: ['asc', 'desc'] }, description: 'Sort order' },
+          ],
+          responses: {
+            200: {
+              description: 'Board exams fetched successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/PaginatedBoardExamResponse' } } },
+            },
+          },
+        },
+        post: {
+          tags: ['BoardExam'],
+          summary: 'Create new board exam',
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateBoardExamRequest' } } },
+          },
+          responses: {
+            201: {
+              description: 'Board exam created successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/SingleBoardExamResponse' } } },
+            },
+          },
+        },
+      },
+      '/basic-setting/board-exams/{id}': {
+        get: {
+          tags: ['BoardExam'],
+          summary: 'Get board exam by ID',
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' }, description: 'Board exam ID' }],
+          responses: {
+            200: {
+              description: 'Board exam fetched successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/SingleBoardExamResponse' } } },
+            },
+          },
+        },
+        patch: {
+          tags: ['BoardExam'],
+          summary: 'Update board exam',
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' }, description: 'Board exam ID' }],
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateBoardExamRequest' } } },
+          },
+          responses: {
+            200: {
+              description: 'Board exam updated successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/SingleBoardExamResponse' } } },
+            },
+          },
+        },
+        delete: {
+          tags: ['BoardExam'],
+          summary: 'Delete board exam',
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' }, description: 'Board exam ID' }],
+          responses: {
+            200: {
+              description: 'Board exam deleted successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      message: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      // Designation API Paths
+      '/basic-setting/designations': {
+        get: {
+          tags: ['Designation'],
+          summary: 'Get all designations',
+          parameters: [
+            { in: 'query', name: 'page', schema: { type: 'integer', minimum: 1 }, description: 'Page number' },
+            { in: 'query', name: 'limit', schema: { type: 'integer', minimum: 1 }, description: 'Number of items per page' },
+            { in: 'query', name: 'searchTerm', schema: { type: 'string' }, description: 'Search term for name' },
+            { in: 'query', name: 'name', schema: { type: 'string' }, description: 'Filter by name' },
+            { in: 'query', name: 'status', schema: { type: 'string', enum: ['active', 'inactive'] }, description: 'Filter by status' },
+            { in: 'query', name: 'school_id', required: true, schema: { type: 'integer', minimum: 1 }, description: 'School ID' },
+            { in: 'query', name: 'sortBy', schema: { type: 'string' }, description: 'Sort field' },
+            { in: 'query', name: 'sortOrder', schema: { type: 'string', enum: ['asc', 'desc'] }, description: 'Sort order' },
+          ],
+          responses: {
+            200: {
+              description: 'Designations fetched successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/PaginatedDesignationResponse' } } },
+            },
+          },
+        },
+        post: {
+          tags: ['Designation'],
+          summary: 'Create new designation',
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateDesignationRequest' } } },
+          },
+          responses: {
+            201: {
+              description: 'Designation created successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/SingleDesignationResponse' } } },
+            },
+          },
+        },
+      },
+      '/basic-setting/designations/{id}': {
+        get: {
+          tags: ['Designation'],
+          summary: 'Get designation by ID',
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' }, description: 'Designation ID' }],
+          responses: {
+            200: {
+              description: 'Designation fetched successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/SingleDesignationResponse' } } },
+            },
+          },
+        },
+        patch: {
+          tags: ['Designation'],
+          summary: 'Update designation',
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' }, description: 'Designation ID' }],
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateDesignationRequest' } } },
+          },
+          responses: {
+            200: {
+              description: 'Designation updated successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/SingleDesignationResponse' } } },
+            },
+          },
+        },
+        delete: {
+          tags: ['Designation'],
+          summary: 'Delete designation',
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' }, description: 'Designation ID' }],
+          responses: {
+            200: {
+              description: 'Designation deleted successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      message: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      // Department API Paths
+      '/basic-setting/departments': {
+        get: {
+          tags: ['Department'],
+          summary: 'Get all departments',
+          parameters: [
+            { in: 'query', name: 'page', schema: { type: 'integer', minimum: 1 }, description: 'Page number' },
+            { in: 'query', name: 'limit', schema: { type: 'integer', minimum: 1 }, description: 'Number of items per page' },
+            { in: 'query', name: 'searchTerm', schema: { type: 'string' }, description: 'Search term for name' },
+            { in: 'query', name: 'name', schema: { type: 'string' }, description: 'Filter by name' },
+            { in: 'query', name: 'status', schema: { type: 'string', enum: ['active', 'inactive'] }, description: 'Filter by status' },
+            { in: 'query', name: 'school_id', required: true, schema: { type: 'integer', minimum: 1 }, description: 'School ID' },
+            { in: 'query', name: 'sortBy', schema: { type: 'string' }, description: 'Sort field' },
+            { in: 'query', name: 'sortOrder', schema: { type: 'string', enum: ['asc', 'desc'] }, description: 'Sort order' },
+          ],
+          responses: {
+            200: {
+              description: 'Departments fetched successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/PaginatedDepartmentResponse' } } },
+            },
+          },
+        },
+        post: {
+          tags: ['Department'],
+          summary: 'Create new department',
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateDepartmentRequest' } } },
+          },
+          responses: {
+            201: {
+              description: 'Department created successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/SingleDepartmentResponse' } } },
+            },
+          },
+        },
+      },
+      '/basic-setting/departments/{id}': {
+        get: {
+          tags: ['Department'],
+          summary: 'Get department by ID',
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' }, description: 'Department ID' }],
+          responses: {
+            200: {
+              description: 'Department fetched successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/SingleDepartmentResponse' } } },
+            },
+          },
+        },
+        patch: {
+          tags: ['Department'],
+          summary: 'Update department',
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' }, description: 'Department ID' }],
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateDepartmentRequest' } } },
+          },
+          responses: {
+            200: {
+              description: 'Department updated successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/SingleDepartmentResponse' } } },
+            },
+          },
+        },
+        delete: {
+          tags: ['Department'],
+          summary: 'Delete department',
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' }, description: 'Department ID' }],
+          responses: {
+            200: {
+              description: 'Department deleted successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      message: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      // Academic Year API Paths
+      '/basic-setting/academic-years': {
+        get: {
+          tags: ['AcademicYear'],
+          summary: 'Get all academic years',
+          parameters: [
+            { in: 'query', name: 'page', schema: { type: 'integer', minimum: 1 }, description: 'Page number' },
+            { in: 'query', name: 'limit', schema: { type: 'integer', minimum: 1 }, description: 'Number of items per page' },
+            { in: 'query', name: 'searchTerm', schema: { type: 'string' }, description: 'Search term for name' },
+            { in: 'query', name: 'name', schema: { type: 'integer' }, description: 'Filter by year' },
+            { in: 'query', name: 'status', schema: { type: 'string', enum: ['active', 'inactive'] }, description: 'Filter by status' },
+            { in: 'query', name: 'school_id', required: true, schema: { type: 'integer', minimum: 1 }, description: 'School ID' },
+            { in: 'query', name: 'sortBy', schema: { type: 'string' }, description: 'Sort field' },
+            { in: 'query', name: 'sortOrder', schema: { type: 'string', enum: ['asc', 'desc'] }, description: 'Sort order' },
+          ],
+          responses: {
+            200: {
+              description: 'Academic years fetched successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/PaginatedAcademicYearResponse' } } },
+            },
+          },
+        },
+        post: {
+          tags: ['AcademicYear'],
+          summary: 'Create new academic year',
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateAcademicYearRequest' } } },
+          },
+          responses: {
+            201: {
+              description: 'Academic year created successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/SingleAcademicYearResponse' } } },
+            },
+          },
+        },
+      },
+      '/basic-setting/academic-years/{id}': {
+        get: {
+          tags: ['AcademicYear'],
+          summary: 'Get academic year by ID',
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' }, description: 'Academic year ID' }],
+          responses: {
+            200: {
+              description: 'Academic year fetched successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/SingleAcademicYearResponse' } } },
+            },
+          },
+        },
+        patch: {
+          tags: ['AcademicYear'],
+          summary: 'Update academic year',
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' }, description: 'Academic year ID' }],
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateAcademicYearRequest' } } },
+          },
+          responses: {
+            200: {
+              description: 'Academic year updated successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/SingleAcademicYearResponse' } } },
+            },
+          },
+        },
+        delete: {
+          tags: ['AcademicYear'],
+          summary: 'Delete academic year',
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' }, description: 'Academic year ID' }],
+          responses: {
+            200: {
+              description: 'Academic year deleted successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      message: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      // Academic Session API Paths
+      '/basic-setting/academic-sessions': {
+        get: {
+          tags: ['AcademicSession'],
+          summary: 'Get all academic sessions',
+          parameters: [
+            { in: 'query', name: 'page', schema: { type: 'integer', minimum: 1 }, description: 'Page number' },
+            { in: 'query', name: 'limit', schema: { type: 'integer', minimum: 1 }, description: 'Number of items per page' },
+            { in: 'query', name: 'searchTerm', schema: { type: 'string' }, description: 'Search term for name' },
+            { in: 'query', name: 'name', schema: { type: 'string' }, description: 'Filter by name' },
+            { in: 'query', name: 'status', schema: { type: 'string', enum: ['active', 'inactive'] }, description: 'Filter by status' },
+            { in: 'query', name: 'school_id', required: true, schema: { type: 'integer', minimum: 1 }, description: 'School ID' },
+            { in: 'query', name: 'sortBy', schema: { type: 'string' }, description: 'Sort field' },
+            { in: 'query', name: 'sortOrder', schema: { type: 'string', enum: ['asc', 'desc'] }, description: 'Sort order' },
+          ],
+          responses: {
+            200: {
+              description: 'Academic sessions fetched successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/PaginatedAcademicSessionResponse' } } },
+            },
+          },
+        },
+        post: {
+          tags: ['AcademicSession'],
+          summary: 'Create new academic session',
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateAcademicSessionRequest' } } },
+          },
+          responses: {
+            201: {
+              description: 'Academic session created successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/SingleAcademicSessionResponse' } } },
+            },
+          },
+        },
+      },
+      '/basic-setting/academic-sessions/{id}': {
+        get: {
+          tags: ['AcademicSession'],
+          summary: 'Get academic session by ID',
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' }, description: 'Academic session ID' }],
+          responses: {
+            200: {
+              description: 'Academic session fetched successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/SingleAcademicSessionResponse' } } },
+            },
+          },
+        },
+        patch: {
+          tags: ['AcademicSession'],
+          summary: 'Update academic session',
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' }, description: 'Academic session ID' }],
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateAcademicSessionRequest' } } },
+          },
+          responses: {
+            200: {
+              description: 'Academic session updated successfully',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/SingleAcademicSessionResponse' } } },
+            },
+          },
+        },
+        delete: {
+          tags: ['AcademicSession'],
+          summary: 'Delete academic session',
+          parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' }, description: 'Academic session ID' }],
+          responses: {
+            200: {
+              description: 'Academic session deleted successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      message: { type: 'string' },
                     },
                   },
                 },

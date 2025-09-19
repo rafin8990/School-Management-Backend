@@ -11,6 +11,13 @@ import { SubjectRoutes } from '../modules/basic-setting/subject/subject.route';
 import { CategoryRoutes } from '../modules/basic-setting/category/category.route';
 import { ClassExamRoutes } from '../modules/basic-setting/class-exam/classExam.route';
 import { ClassGroupRoutes } from '../modules/basic-setting/class-group/classGroup.route';
+import { ClassSectionRoutes } from '../modules/basic-setting/class-section/classSection.route';
+import { ClassShiftRoutes } from '../modules/basic-setting/class-shift/classShift.route';
+import { BoardExamRoutes } from '../modules/basic-setting/board-exam/boardExam.route';
+import { DesignationRoutes } from '../modules/basic-setting/designation/designation.route';
+import { DepartmentRoutes } from '../modules/basic-setting/department/department.route';
+import { AcademicYearRoutes } from '../modules/basic-setting/academic-year/academicYear.route';
+import { AcademicSessionRoutes } from '../modules/basic-setting/academic-session/academicSession.route';
 
 
 const router = express.Router();
@@ -61,8 +68,36 @@ const moduleRoutes = [
   routes:ClassExamRoutes
  },
  {
-  path:'/basic-setting/class-groups',
-  routes:ClassGroupRoutes
+   path:'/basic-setting/class-groups',
+   routes:ClassGroupRoutes
+ },
+ {
+   path:'/basic-setting/class-sections',
+   routes:ClassSectionRoutes
+ },
+ {
+   path:'/basic-setting/class-shifts',
+   routes:ClassShiftRoutes
+ },
+ {
+   path:'/basic-setting/board-exams',
+   routes:BoardExamRoutes
+ },
+ {
+   path:'/basic-setting/designations',
+   routes:DesignationRoutes
+ },
+ {
+   path:'/basic-setting/departments',
+   routes:DepartmentRoutes
+ },
+ {
+   path:'/basic-setting/academic-years',
+   routes:AcademicYearRoutes
+ },
+ {
+   path:'/basic-setting/academic-sessions',
+   routes:AcademicSessionRoutes
  }
 ];
 
