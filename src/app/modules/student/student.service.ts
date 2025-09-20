@@ -15,18 +15,18 @@ const generateStudentId = async (schoolId: number): Promise<string> => {
     ORDER BY student_id DESC 
     LIMIT 1;
   `;
-  
+
   const result = await pool.query(query, [schoolId]);
-  
+
   if (result.rows.length === 0) {
     // First student for this school
     return '2025001';
   }
-  
+
   const lastStudentId = result.rows[0].student_id;
   const lastNumber = parseInt(lastStudentId);
   const nextNumber = lastNumber + 1;
-  
+
   return nextNumber.toString();
 };
 
@@ -53,7 +53,7 @@ const getClassesWithAssignments = async (schoolId: number) => {
     WHERE c.school_id = $1 AND c.status = 'active'
     ORDER BY c.name, g.name, s.name, sh.name;
   `;
-  
+
   const result = await pool.query(query, [schoolId]);
   return result.rows;
 };
@@ -76,7 +76,7 @@ const createStudent = async (data: IStudent): Promise<IStudent | null> => {
         WHERE student_id = $1 AND school_id = $2;
       `;
       const existingStudent = await client.query(checkQuery, [studentId, data.school_id]);
-      
+
       if (existingStudent.rows.length > 0) {
         throw new ApiError(httpStatus.CONFLICT, 'Student ID already exists for this school');
       }
@@ -205,7 +205,7 @@ const getAllStudents = async (
   let paramIndex = 1;
 
   if (searchTerm) {
-    conditions.push(`(s.student_name_en ILIKE $${paramIndex} OR s.student_id ILIKE $${paramIndex} OR s.mobile ILIKE $${paramIndex})`);
+    conditions.push(`(s.student_name_en ILIKE $${paramIndex} OR s.student_id ILIKE $${paramIndex} OR s.mobile ILIKE $${paramIndex} OR s.roll::text ILIKE $${paramIndex} OR s.date_of_birth_en::text ILIKE $${paramIndex})`);
     values.push(`%${searchTerm}%`);
     paramIndex++;
   }
@@ -295,7 +295,7 @@ const updateStudent = async (id: number, data: Partial<IStudent>): Promise<IStud
         WHERE student_id = $1 AND school_id = $2 AND id != $3;
       `;
       const existingStudent = await client.query(checkQuery, [data.student_id, data.school_id, id]);
-      
+
       if (existingStudent.rows.length > 0) {
         throw new ApiError(httpStatus.CONFLICT, 'Student ID already exists for this school');
       }
@@ -362,6 +362,203 @@ const deleteStudent = async (id: number): Promise<void> => {
   }
 };
 
+// Type for student patch
+type StudentPatch = { id: number } & Record<string, any>;
+
+// Check if value is a plain object (not array)
+const isPlainObject = (v: unknown) => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+// Allowed fields whitelist - snake_case columns
+const ALLOWED = new Set<string>([
+  // basic
+  'student_name_en', 'student_name_bn', 'mobile', 'gender', 'religion', 'blood_group', 'roll',
+  'national_id', 'nationality', 'student_photo',
+  // academic/assignment
+  'class_id', 'group_id', 'section_id', 'shift_id', 'session_id', 'academic_year_id',
+  // dates
+  'date_of_birth_en', 'date_of_birth_bn', 'admission_date',
+  // father
+  'father_name_en', 'father_name_bn', 'father_nid', 'father_mobile', 'father_dob_en', 'father_dob_bn',
+  'father_occupation_en', 'father_occupation_bn', 'father_income',
+  // mother
+  'mother_name_en', 'mother_name_bn', 'mother_nid', 'mother_mobile', 'mother_dob_en', 'mother_dob_bn',
+  'mother_occupation_en', 'mother_occupation_bn', 'mother_income',
+  // current address
+  'current_village_en', 'current_village_bn', 'current_post_office_en', 'current_post_office_bn',
+  'current_post_code', 'current_district', 'current_thana',
+  // permanent address
+  'permanent_village_en', 'permanent_village_bn', 'permanent_post_office_en', 'permanent_post_office_bn',
+  'permanent_post_code', 'permanent_district', 'permanent_thana',
+  // guardian & prev edu
+  'guardian_name_en', 'guardian_name_bn', 'guardian_address_en', 'guardian_address_bn',
+  'last_institution', 'last_class', 'registration_number', 'result', 'year_passed',
+  // student code (varchar, unique per school)
+  'student_id'
+]);
+
+// Safe identifier regex - only allows valid column names
+const SAFE_IDENTIFIER = /^[a-z_][a-z0-9_]*$/;
+
+const bulkUpdateStudents = async (patches: StudentPatch[], schoolId: number): Promise<{
+  rows: IStudent[];
+  updatedCount: number;
+  failed: Array<{ id: number; error: string }>;
+}> => {
+  console.log('=== STUDENT SERVICE BULK UPDATE START ===');
+  console.log('Service received patches:', JSON.stringify(patches, null, 2));
+  console.log('School ID:', schoolId);
+  
+  const client = await pool.connect();
+  const rows: IStudent[] = [];
+  const failed: Array<{ id: number; error: string }> = [];
+
+  try {
+    await client.query('BEGIN');
+
+    for (const patch of patches) {
+      try {
+        // 1) patch shape check
+        if (!isPlainObject(patch)) {
+          failed.push({ id: 0, error: 'Each patch must be an object' });
+          continue;
+        }
+
+        const id = Number(patch.id);
+        if (!Number.isFinite(id) || id <= 0) {
+          failed.push({ id: 0, error: 'Each patch must include a positive numeric id' });
+          continue;
+        }
+
+        // 2) build entries (skip forbidden/unknown/numeric keys)
+        console.log(`\n=== Processing student ${id} ===`);
+        console.log(`Raw patch:`, JSON.stringify(patch, null, 2));
+        console.log(`Object.keys:`, Object.keys(patch));
+        
+        const entries = Object.entries(patch).filter(([k, v]) => {
+          // Skip if key is numeric (like "0", "1", etc.)
+          if (/^\d+$/.test(k)) {
+            console.log(`❌ SKIPPING numeric key: "${k}"`);
+            return false;
+          }
+          
+          const isValid = k !== 'id' &&
+            v !== undefined &&
+            ALLOWED.has(k) &&
+            SAFE_IDENTIFIER.test(k);
+          
+          if (!isValid) {
+            console.log(`❌ SKIPPING key "${k}": value="${v}", ALLOWED=${ALLOWED.has(k)}, SAFE=${SAFE_IDENTIFIER.test(k)}`);
+          } else {
+            console.log(`✅ KEEPING key "${k}": value="${v}"`);
+          }
+          return isValid;
+        });
+
+        console.log(`Final entries for student ${id}:`, entries.map(([k]) => k));
+        
+        // Double check - ensure no numeric keys in entries
+        const hasNumericKeys = entries.some(([k]) => /^\d+$/.test(k));
+        if (hasNumericKeys) {
+          console.log(`❌ ERROR: Found numeric keys in entries for student ${id}`);
+          failed.push({ id, error: 'Invalid data structure - numeric keys detected' });
+          continue;
+        }
+
+        if (entries.length === 0) {
+          // nothing to update; optionally return current row
+          const cur = await client.query(
+            'SELECT * FROM students WHERE id=$1 AND school_id=$2 AND status = $3',
+            [id, schoolId, 'active']
+          );
+          if (cur.rowCount === 0) {
+            failed.push({ id, error: 'Not found for this school or not active' });
+            continue;
+          }
+          rows.push(cur.rows[0]);
+          continue;
+        }
+
+        // 3) unique guard for varchar student_id
+        const newStudentCode = entries.find(([k]) => k === 'student_id')?.[1];
+        if (newStudentCode) {
+          const dup = await client.query(
+            'SELECT 1 FROM students WHERE student_id=$1 AND school_id=$2 AND id<>$3',
+            [newStudentCode, schoolId, id]
+          );
+          if (dup.rowCount) {
+            failed.push({ id, error: `Student ID ${newStudentCode} already exists` });
+            continue;
+          }
+        }
+
+        // 4) ensure active/existing
+        const ok = await client.query(
+          'SELECT 1 FROM students WHERE id=$1 AND school_id=$2 AND status=$3',
+          [id, schoolId, 'active']
+        );
+        if (ok.rowCount === 0) {
+          failed.push({ id, error: 'Not found for this school or not active' });
+          continue;
+        }
+
+        // 5) build SET ... WHERE with safe param indexes
+        const setParts: string[] = [];
+        const values: any[] = [];
+        let p = 1;
+
+        for (const [k, v] of entries) {
+          const setPart = `${k} = $${p}`;
+          setParts.push(setPart);
+          values.push(v);
+          p++;
+        }
+        setParts.push('updated_at = NOW()');
+
+        const idIndex = p;      // next
+        const schoolIndex = p + 1;
+
+        const sql = `
+          UPDATE students
+          SET ${setParts.join(', ')}
+          WHERE id = $${idIndex} AND school_id = $${schoolIndex} AND status = 'active'
+          RETURNING *;
+        `;
+        values.push(id, schoolId);
+
+        console.log(`🔧 SQL for student ${id}:`, sql);
+        console.log(`📊 Values:`, values);
+
+        const r = await client.query(sql, values);
+        if (r.rowCount === 0) {
+          failed.push({ id, error: 'Update matched 0 rows' });
+          continue;
+        }
+        rows.push(r.rows[0]);
+        console.log(`Successfully updated student ${id}`);
+
+      } catch (error) {
+        console.log(`Error processing student ${patch.id}:`, error);
+        failed.push({ id: patch.id || 0, error: error instanceof Error ? error.message : 'Unknown error' });
+      }
+    }
+
+    await client.query('COMMIT');
+    console.log('Transaction committed successfully');
+    console.log('Final results count:', rows.length);
+    console.log('Failed count:', failed.length);
+    console.log('=== STUDENT SERVICE BULK UPDATE END ===');
+    
+    return { rows, updatedCount: rows.length, failed };
+  } catch (error) {
+    console.log('ERROR in bulk update:', error);
+    await client.query('ROLLBACK');
+    console.log('Transaction rolled back');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 export const StudentService = {
   createStudent,
   getAllStudents,
@@ -370,4 +567,5 @@ export const StudentService = {
   deleteStudent,
   generateStudentId,
   getClassesWithAssignments,
+  bulkUpdateStudents,
 };

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Request,Response,NextFunction, Router } from 'express';
 import validateRequest from '../../middlewares/validateRequest';
 import { StudentController } from './student.controller';
 import { StudentValidation } from './student.validation';
@@ -41,10 +41,17 @@ router.patch(
   StudentController.updateStudent
 );
 
+router.patch(
+  '/bulk',
+  StudentController.bulkUpdateStudents
+);
+
 router.delete(
   '/:id',
   validateRequest(StudentValidation.deleteStudentZodSchema),
   StudentController.deleteStudent
 );
+
+
 
 export const StudentRoutes = router;

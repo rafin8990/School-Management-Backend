@@ -6,6 +6,7 @@ import pick from '../../../shared/pick';
 import sendResponse from '../../../shared/sendResponse';
 import { IStudent } from './student.interface';
 import { StudentService } from './student.service';
+import ApiError from '../../../errors/ApiError';
 
 /**
  * @swagger
@@ -706,6 +707,7 @@ const getAllStudents = catchAsync(async (req: Request, res: Response) => {
     'section_id',
     'shift_id',
     'academic_year_id',
+    'session_id',
     'status',
     'school_id',
   ]);
@@ -1002,6 +1004,188 @@ const getClassesWithAssignments = catchAsync(async (req: Request, res: Response)
   });
 });
 
+const bulkUpdateStudents = catchAsync(async (req: Request, res: Response) => {
+  console.log('=== BULK UPDATE REQUEST START ===');
+  console.log('Full request body:', JSON.stringify(req.body, null, 2));
+  console.log('Request headers:', req.headers);
+  console.log('Request method:', req.method);
+  console.log('Request URL:', req.url);
+  
+  // Get school_id from header
+  const schoolId = Number(req.header('X-School-Id'));
+  if (!schoolId || isNaN(schoolId)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'X-School-Id header is required and must be a valid number');
+  }
+  
+  // Validate request body is array
+  if (!Array.isArray(req.body)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Request body must be an array');
+  }
+  
+  console.log('School ID:', schoolId);
+  console.log('Number of updates:', req.body.length);
+  console.log('=== BULK UPDATE REQUEST END ===');
+  
+  // Call service
+  const result = await StudentService.bulkUpdateStudents(req.body, schoolId);
+  
+  res.status(200).json({
+    success: true,
+    message: `Updated ${result.updatedCount} students`,
+    updatedCount: result.updatedCount,
+    failed: result.failed,
+    rows: result.rows,
+  });
+});
+
+/**
+ * @swagger
+ * /api/v1/students/bulk-update:
+ *   patch:
+ *     summary: Bulk update multiple students
+ *     description: Update multiple students at once with array of student_id and data objects
+ *     tags: [Students]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               type: object
+ *               required:
+ *                 - student_id
+ *                 - data
+ *               properties:
+ *                 student_id:
+ *                   type: integer
+ *                   description: Student ID to update
+ *                   example: 1
+ *                 data:
+ *                   type: object
+ *                   description: Student data to update
+ *                   properties:
+ *                     student_name_en:
+ *                       type: string
+ *                       maxLength: 150
+ *                       example: "John Doe"
+ *                     student_name_bn:
+ *                       type: string
+ *                       maxLength: 150
+ *                       example: "জন ডো"
+ *                     mobile:
+ *                       type: string
+ *                       maxLength: 15
+ *                       example: "01234567890"
+ *                     roll:
+ *                       type: integer
+ *                       example: 101
+ *                     class_id:
+ *                       type: integer
+ *                       example: 1
+ *                     group_id:
+ *                       type: integer
+ *                       example: 1
+ *                     section_id:
+ *                       type: integer
+ *                       example: 1
+ *                     shift_id:
+ *                       type: integer
+ *                       example: 1
+ *                     category_id:
+ *                       type: integer
+ *                       example: 1
+ *                     academic_year_id:
+ *                       type: integer
+ *                       example: 1
+ *                     session_id:
+ *                       type: integer
+ *                       example: 1
+ *                     father_name_en:
+ *                       type: string
+ *                       maxLength: 150
+ *                       example: "Robert Doe"
+ *                     father_name_bn:
+ *                       type: string
+ *                       maxLength: 150
+ *                       example: "রবার্ট ডো"
+ *                     mother_name_en:
+ *                       type: string
+ *                       maxLength: 150
+ *                       example: "Jane Doe"
+ *                     mother_name_bn:
+ *                       type: string
+ *                       maxLength: 150
+ *                       example: "জেন ডো"
+ *                     date_of_birth_en:
+ *                       type: string
+ *                       format: date
+ *                       example: "2000-01-01"
+ *                     date_of_birth_bn:
+ *                       type: string
+ *                       example: "০১/০১/২০০০"
+ *                     gender:
+ *                       type: string
+ *                       maxLength: 20
+ *                       example: "Male"
+ *                     blood_group:
+ *                       type: string
+ *                       enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
+ *                       example: "A+"
+ *                     religion:
+ *                       type: string
+ *                       maxLength: 50
+ *                       example: "Islam"
+ *             example:
+ *               - student_id: 1
+ *                 data:
+ *                   student_name_en: "John Doe"
+ *                   mobile: "01234567890"
+ *                   roll: 101
+ *               - student_id: 2
+ *                 data:
+ *                   student_name_en: "Jane Smith"
+ *                   mobile: "01234567891"
+ *                   roll: 102
+ *     responses:
+ *       200:
+ *         description: Students updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Students updated successfully"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Student'
+ *       400:
+ *         description: Bad request or validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: One or more students not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       409:
+ *         description: Duplicate student ID conflict
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+
+
 export const StudentController = {
   createStudent,
   getAllStudents,
@@ -1010,4 +1194,5 @@ export const StudentController = {
   deleteStudent,
   generateStudentId,
   getClassesWithAssignments,
+  bulkUpdateStudents,
 };

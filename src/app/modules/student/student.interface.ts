@@ -77,6 +77,7 @@ export type IStudentFilters = {
   section_id?: number;
   shift_id?: number;
   academic_year_id?: number;
+  session_id?: number;
   status?: 'active' | 'inactive';
   school_id?: number;
 };

@@ -122,8 +122,8 @@ const updateSection = async (id: number, data: Partial<ISection>): Promise<ISect
   try {
     await client.query('BEGIN');
 
-    const updateFields = [];
-    const values = [];
+    const updateFields: string[] = [];
+    const values: any[] = [];
     let paramCount = 1;
 
     Object.entries(data).forEach(([key, value]) => {

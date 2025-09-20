@@ -86,6 +86,8 @@ CREATE TABLE students (
     status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
     password VARCHAR(255) DEFAULT '123456',
     school_id INTEGER NOT NULL REFERENCES school(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT uq_student UNIQUE (student_id, school_id)
 );
