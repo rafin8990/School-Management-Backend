@@ -11,12 +11,58 @@ import { swaggerSpec } from './docs/swagger';
 import cookieParser from 'cookie-parser';
 
 const app: Application = express();
+// Enhanced CORS configuration
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:4000', 'http://127.0.0.1:3000', 'http://127.0.0.1:4000'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000', 
+      'http://localhost:4000', 
+      'http://127.0.0.1:3000', 
+      'http://127.0.0.1:4000'
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With', 
+    'X-School-Id', 
+    'Accept', 
+    'Origin', 
+    'Access-Control-Request-Method', 
+    'Access-Control-Request-Headers'
+  ],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
+
+// Additional CORS headers for all responses
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-School-Id, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
+  
+  next();
+});
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -33,7 +79,32 @@ app.get('/api/v1/health', (req: Request, res: Response) => {
     message: 'Healthy and Running',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    cors: {
+      origin: req.headers.origin,
+      method: req.method,
+      headers: req.headers
+    }
+  });
+});
+
+// CORS test endpoint
+app.options('/api/v1/cors-test', (req: Request, res: Response) => {
+  console.log('CORS preflight request received:', {
+    origin: req.headers.origin,
+    method: req.headers['access-control-request-method'],
+    headers: req.headers['access-control-request-headers']
+  });
+  res.status(204).end();
+});
+
+app.get('/api/v1/cors-test', (req: Request, res: Response) => {
+  res.status(httpStatus.OK).json({
+    success: true,
+    message: 'CORS test successful',
+    origin: req.headers.origin,
+    method: req.method,
+    timestamp: new Date().toISOString()
   });
 });
 

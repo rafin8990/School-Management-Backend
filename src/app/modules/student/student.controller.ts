@@ -1070,6 +1070,13 @@ const getClassesWithAssignments = catchAsync(async (req: Request, res: Response)
  *         description: Internal server error
  */
 const bulkUpdateStudents = catchAsync(async (req: Request, res: Response) => {
+  console.log('Bulk update request received:', {
+    method: req.method,
+    headers: req.headers,
+    body: req.body,
+    schoolId: req.header('X-School-Id')
+  });
+
   const schoolId = Number(req.header('X-School-Id'));
   if (!schoolId || isNaN(schoolId)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'X-School-Id header is required and must be a valid number');
@@ -1078,8 +1085,11 @@ const bulkUpdateStudents = catchAsync(async (req: Request, res: Response) => {
   if (!Array.isArray(req.body)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Request body must be an array');
   }
+  
+  console.log('Processing bulk update for school:', schoolId, 'with', req.body.length, 'patches');
   const result = await StudentService.bulkUpdateStudents(req.body, schoolId);
 
+  console.log('Bulk update result:', result);
   res.status(200).json({
     success: true,
     message: `Updated ${result.updatedCount} students`,

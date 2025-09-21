@@ -35,6 +35,15 @@ router.get(
   StudentController.getSingleStudent
 );
 
+// Handle preflight OPTIONS request for bulk update
+router.options('/bulk', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-School-Id, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.status(204).send();
+});
+
 router.patch(
   '/bulk',
   StudentController.bulkUpdateStudents
