@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 import httpStatus from 'http-status';
 import { paginationFields } from '../../../constants/pagination';
+import ApiError from '../../../errors/ApiError';
 import catchAsync from '../../../shared/catchAsync';
 import pick from '../../../shared/pick';
 import sendResponse from '../../../shared/sendResponse';
 import { IStudent } from './student.interface';
 import { StudentService } from './student.service';
-import ApiError from '../../../errors/ApiError';
 
 /**
  * @swagger
@@ -1005,30 +1005,16 @@ const getClassesWithAssignments = catchAsync(async (req: Request, res: Response)
 });
 
 const bulkUpdateStudents = catchAsync(async (req: Request, res: Response) => {
-  console.log('=== BULK UPDATE REQUEST START ===');
-  console.log('Full request body:', JSON.stringify(req.body, null, 2));
-  console.log('Request headers:', req.headers);
-  console.log('Request method:', req.method);
-  console.log('Request URL:', req.url);
-  
-  // Get school_id from header
   const schoolId = Number(req.header('X-School-Id'));
   if (!schoolId || isNaN(schoolId)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'X-School-Id header is required and must be a valid number');
   }
-  
-  // Validate request body is array
+
   if (!Array.isArray(req.body)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Request body must be an array');
   }
-  
-  console.log('School ID:', schoolId);
-  console.log('Number of updates:', req.body.length);
-  console.log('=== BULK UPDATE REQUEST END ===');
-  
-  // Call service
   const result = await StudentService.bulkUpdateStudents(req.body, schoolId);
-  
+
   res.status(200).json({
     success: true,
     message: `Updated ${result.updatedCount} students`,

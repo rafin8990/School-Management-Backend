@@ -1,10 +1,10 @@
 import httpStatus from 'http-status';
-import { IStudent, IStudentFilters } from './student.interface';
-import pool from '../../../utils/dbClient';
-import { IPaginationOptions } from '../../../interfaces/pagination';
-import { IGenericResponse } from '../../../interfaces/common';
-import { paginationHelpers } from '../../../helpers/paginationHelper';
 import ApiError from '../../../errors/ApiError';
+import { paginationHelpers } from '../../../helpers/paginationHelper';
+import { IGenericResponse } from '../../../interfaces/common';
+import { IPaginationOptions } from '../../../interfaces/pagination';
+import pool from '../../../utils/dbClient';
+import { IStudent, IStudentFilters } from './student.interface';
 
 // Generate next student ID for a school
 const generateStudentId = async (schoolId: number): Promise<string> => {
@@ -75,10 +75,16 @@ const createStudent = async (data: IStudent): Promise<IStudent | null> => {
         SELECT id FROM students 
         WHERE student_id = $1 AND school_id = $2;
       `;
-      const existingStudent = await client.query(checkQuery, [studentId, data.school_id]);
+      const existingStudent = await client.query(checkQuery, [
+        studentId,
+        data.school_id,
+      ]);
 
       if (existingStudent.rows.length > 0) {
-        throw new ApiError(httpStatus.CONFLICT, 'Student ID already exists for this school');
+        throw new ApiError(
+          httpStatus.CONFLICT,
+          'Student ID already exists for this school'
+        );
       }
     }
 
@@ -197,7 +203,7 @@ const getAllStudents = async (
     sortOrder = 'desc',
   } = paginationHelpers.calculatePagination({
     ...paginationOptions,
-    sortBy: paginationOptions.sortBy || 'id'
+    sortBy: paginationOptions.sortBy || 'id',
   });
 
   const conditions: string[] = [];
@@ -205,7 +211,9 @@ const getAllStudents = async (
   let paramIndex = 1;
 
   if (searchTerm) {
-    conditions.push(`(s.student_name_en ILIKE $${paramIndex} OR s.student_id ILIKE $${paramIndex} OR s.mobile ILIKE $${paramIndex} OR s.roll::text ILIKE $${paramIndex} OR s.date_of_birth_en::text ILIKE $${paramIndex})`);
+    conditions.push(
+      `(s.student_name_en ILIKE $${paramIndex} OR s.student_id ILIKE $${paramIndex} OR s.mobile ILIKE $${paramIndex} OR s.roll::text ILIKE $${paramIndex} OR s.date_of_birth_en::text ILIKE $${paramIndex})`
+    );
     values.push(`%${searchTerm}%`);
     paramIndex++;
   }
@@ -218,7 +226,8 @@ const getAllStudents = async (
     }
   }
 
-  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const whereClause =
+    conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   const query = `
     SELECT s.*,
@@ -245,7 +254,10 @@ const getAllStudents = async (
   const result = await pool.query(query, values);
 
   const countQuery = `SELECT COUNT(*) FROM students s ${whereClause};`;
-  const countResult = await pool.query(countQuery, values.slice(0, paramIndex - 2));
+  const countResult = await pool.query(
+    countQuery,
+    values.slice(0, paramIndex - 2)
+  );
   const total = parseInt(countResult.rows[0].count, 10);
 
   return {
@@ -283,7 +295,10 @@ const getSingleStudent = async (id: number): Promise<IStudent | null> => {
   return result.rows[0] || null;
 };
 
-const updateStudent = async (id: number, data: Partial<IStudent>): Promise<IStudent | null> => {
+const updateStudent = async (
+  id: number,
+  data: Partial<IStudent>
+): Promise<IStudent | null> => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -294,10 +309,17 @@ const updateStudent = async (id: number, data: Partial<IStudent>): Promise<IStud
         SELECT id FROM students 
         WHERE student_id = $1 AND school_id = $2 AND id != $3;
       `;
-      const existingStudent = await client.query(checkQuery, [data.student_id, data.school_id, id]);
+      const existingStudent = await client.query(checkQuery, [
+        data.student_id,
+        data.school_id,
+        id,
+      ]);
 
       if (existingStudent.rows.length > 0) {
-        throw new ApiError(httpStatus.CONFLICT, 'Student ID already exists for this school');
+        throw new ApiError(
+          httpStatus.CONFLICT,
+          'Student ID already exists for this school'
+        );
       }
     }
 
@@ -362,52 +384,86 @@ const deleteStudent = async (id: number): Promise<void> => {
   }
 };
 
-// Type for student patch
 type StudentPatch = { id: number } & Record<string, any>;
 
-// Check if value is a plain object (not array)
-const isPlainObject = (v: unknown) => v !== null && typeof v === 'object' && !Array.isArray(v);
+const isPlainObject = (v: unknown) =>
+  v !== null && typeof v === 'object' && !Array.isArray(v);
 
-// Allowed fields whitelist - snake_case columns
 const ALLOWED = new Set<string>([
-  // basic
-  'student_name_en', 'student_name_bn', 'mobile', 'gender', 'religion', 'blood_group', 'roll',
-  'national_id', 'nationality', 'student_photo',
-  // academic/assignment
-  'class_id', 'group_id', 'section_id', 'shift_id', 'session_id', 'academic_year_id',
-  // dates
-  'date_of_birth_en', 'date_of_birth_bn', 'admission_date',
-  // father
-  'father_name_en', 'father_name_bn', 'father_nid', 'father_mobile', 'father_dob_en', 'father_dob_bn',
-  'father_occupation_en', 'father_occupation_bn', 'father_income',
-  // mother
-  'mother_name_en', 'mother_name_bn', 'mother_nid', 'mother_mobile', 'mother_dob_en', 'mother_dob_bn',
-  'mother_occupation_en', 'mother_occupation_bn', 'mother_income',
-  // current address
-  'current_village_en', 'current_village_bn', 'current_post_office_en', 'current_post_office_bn',
-  'current_post_code', 'current_district', 'current_thana',
-  // permanent address
-  'permanent_village_en', 'permanent_village_bn', 'permanent_post_office_en', 'permanent_post_office_bn',
-  'permanent_post_code', 'permanent_district', 'permanent_thana',
-  // guardian & prev edu
-  'guardian_name_en', 'guardian_name_bn', 'guardian_address_en', 'guardian_address_bn',
-  'last_institution', 'last_class', 'registration_number', 'result', 'year_passed',
-  // student code (varchar, unique per school)
-  'student_id'
+  'student_name_en',
+  'student_name_bn',
+  'mobile',
+  'gender',
+  'religion',
+  'blood_group',
+  'roll',
+  'national_id',
+  'nationality',
+  'student_photo',
+  'class_id',
+  'group_id',
+  'section_id',
+  'shift_id',
+  'session_id',
+  'academic_year_id',
+  'date_of_birth_en',
+  'date_of_birth_bn',
+  'admission_date',
+  'father_name_en',
+  'father_name_bn',
+  'father_nid',
+  'father_mobile',
+  'father_dob_en',
+  'father_dob_bn',
+  'father_occupation_en',
+  'father_occupation_bn',
+  'father_income',
+  'mother_name_en',
+  'mother_name_bn',
+  'mother_nid',
+  'mother_mobile',
+  'mother_dob_en',
+  'mother_dob_bn',
+  'mother_occupation_en',
+  'mother_occupation_bn',
+  'mother_income',
+  'current_village_en',
+  'current_village_bn',
+  'current_post_office_en',
+  'current_post_office_bn',
+  'current_post_code',
+  'current_district',
+  'current_thana',
+  'permanent_village_en',
+  'permanent_village_bn',
+  'permanent_post_office_en',
+  'permanent_post_office_bn',
+  'permanent_post_code',
+  'permanent_district',
+  'permanent_thana',
+  'guardian_name_en',
+  'guardian_name_bn',
+  'guardian_address_en',
+  'guardian_address_bn',
+  'last_institution',
+  'last_class',
+  'registration_number',
+  'result',
+  'year_passed',
+  'student_id',
 ]);
 
-// Safe identifier regex - only allows valid column names
 const SAFE_IDENTIFIER = /^[a-z_][a-z0-9_]*$/;
 
-const bulkUpdateStudents = async (patches: StudentPatch[], schoolId: number): Promise<{
+const bulkUpdateStudents = async (
+  patches: StudentPatch[],
+  schoolId: number
+): Promise<{
   rows: IStudent[];
   updatedCount: number;
   failed: Array<{ id: number; error: string }>;
 }> => {
-  console.log('=== STUDENT SERVICE BULK UPDATE START ===');
-  console.log('Service received patches:', JSON.stringify(patches, null, 2));
-  console.log('School ID:', schoolId);
-  
+
   const client = await pool.connect();
   const rows: IStudent[] = [];
   const failed: Array<{ id: number; error: string }> = [];
@@ -417,7 +473,6 @@ const bulkUpdateStudents = async (patches: StudentPatch[], schoolId: number): Pr
 
     for (const patch of patches) {
       try {
-        // 1) patch shape check
         if (!isPlainObject(patch)) {
           failed.push({ id: 0, error: 'Each patch must be an object' });
           continue;
@@ -425,60 +480,66 @@ const bulkUpdateStudents = async (patches: StudentPatch[], schoolId: number): Pr
 
         const id = Number(patch.id);
         if (!Number.isFinite(id) || id <= 0) {
-          failed.push({ id: 0, error: 'Each patch must include a positive numeric id' });
+          failed.push({
+            id: 0,
+            error: 'Each patch must include a positive numeric id',
+          });
           continue;
         }
 
-        // 2) build entries (skip forbidden/unknown/numeric keys)
-        console.log(`\n=== Processing student ${id} ===`);
-        console.log(`Raw patch:`, JSON.stringify(patch, null, 2));
-        console.log(`Object.keys:`, Object.keys(patch));
-        
+
         const entries = Object.entries(patch).filter(([k, v]) => {
-          // Skip if key is numeric (like "0", "1", etc.)
           if (/^\d+$/.test(k)) {
             console.log(`❌ SKIPPING numeric key: "${k}"`);
             return false;
           }
-          
-          const isValid = k !== 'id' &&
+
+          const isValid =
+            k !== 'id' &&
             v !== undefined &&
             ALLOWED.has(k) &&
             SAFE_IDENTIFIER.test(k);
-          
+
           if (!isValid) {
-            console.log(`❌ SKIPPING key "${k}": value="${v}", ALLOWED=${ALLOWED.has(k)}, SAFE=${SAFE_IDENTIFIER.test(k)}`);
+            console.log(
+              `❌ SKIPPING key "${k}": value="${v}", ALLOWED=${ALLOWED.has(
+                k
+              )}, SAFE=${SAFE_IDENTIFIER.test(k)}`
+            );
           } else {
             console.log(`✅ KEEPING key "${k}": value="${v}"`);
           }
           return isValid;
         });
 
-        console.log(`Final entries for student ${id}:`, entries.map(([k]) => k));
-        
-        // Double check - ensure no numeric keys in entries
         const hasNumericKeys = entries.some(([k]) => /^\d+$/.test(k));
         if (hasNumericKeys) {
-          console.log(`❌ ERROR: Found numeric keys in entries for student ${id}`);
-          failed.push({ id, error: 'Invalid data structure - numeric keys detected' });
+          console.log(
+            `❌ ERROR: Found numeric keys in entries for student ${id}`
+          );
+          failed.push({
+            id,
+            error: 'Invalid data structure - numeric keys detected',
+          });
           continue;
         }
 
         if (entries.length === 0) {
-          // nothing to update; optionally return current row
           const cur = await client.query(
             'SELECT * FROM students WHERE id=$1 AND school_id=$2 AND status = $3',
             [id, schoolId, 'active']
           );
           if (cur.rowCount === 0) {
-            failed.push({ id, error: 'Not found for this school or not active' });
+            failed.push({
+              id,
+              error: 'Not found for this school or not active',
+            });
             continue;
           }
           rows.push(cur.rows[0]);
           continue;
         }
 
-        // 3) unique guard for varchar student_id
         const newStudentCode = entries.find(([k]) => k === 'student_id')?.[1];
         if (newStudentCode) {
           const dup = await client.query(
@@ -486,12 +547,15 @@ const bulkUpdateStudents = async (patches: StudentPatch[], schoolId: number): Pr
             [newStudentCode, schoolId, id]
           );
           if (dup.rowCount) {
-            failed.push({ id, error: `Student ID ${newStudentCode} already exists` });
+            failed.push({
+              id,
+              error: `Student ID ${newStudentCode} already exists`,
+            });
             continue;
           }
         }
 
-        // 4) ensure active/existing
+
         const ok = await client.query(
           'SELECT 1 FROM students WHERE id=$1 AND school_id=$2 AND status=$3',
           [id, schoolId, 'active']
@@ -501,7 +565,6 @@ const bulkUpdateStudents = async (patches: StudentPatch[], schoolId: number): Pr
           continue;
         }
 
-        // 5) build SET ... WHERE with safe param indexes
         const setParts: string[] = [];
         const values: any[] = [];
         let p = 1;
@@ -514,7 +577,7 @@ const bulkUpdateStudents = async (patches: StudentPatch[], schoolId: number): Pr
         }
         setParts.push('updated_at = NOW()');
 
-        const idIndex = p;      // next
+        const idIndex = p; 
         const schoolIndex = p + 1;
 
         const sql = `
@@ -525,8 +588,6 @@ const bulkUpdateStudents = async (patches: StudentPatch[], schoolId: number): Pr
         `;
         values.push(id, schoolId);
 
-        console.log(`🔧 SQL for student ${id}:`, sql);
-        console.log(`📊 Values:`, values);
 
         const r = await client.query(sql, values);
         if (r.rowCount === 0) {
@@ -534,25 +595,18 @@ const bulkUpdateStudents = async (patches: StudentPatch[], schoolId: number): Pr
           continue;
         }
         rows.push(r.rows[0]);
-        console.log(`Successfully updated student ${id}`);
-
       } catch (error) {
         console.log(`Error processing student ${patch.id}:`, error);
-        failed.push({ id: patch.id || 0, error: error instanceof Error ? error.message : 'Unknown error' });
+        failed.push({
+          id: patch.id || 0,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
       }
     }
-
     await client.query('COMMIT');
-    console.log('Transaction committed successfully');
-    console.log('Final results count:', rows.length);
-    console.log('Failed count:', failed.length);
-    console.log('=== STUDENT SERVICE BULK UPDATE END ===');
-    
     return { rows, updatedCount: rows.length, failed };
   } catch (error) {
-    console.log('ERROR in bulk update:', error);
     await client.query('ROLLBACK');
-    console.log('Transaction rolled back');
     throw error;
   } finally {
     client.release();

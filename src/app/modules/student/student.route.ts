@@ -1,4 +1,4 @@
-import { Request,Response,NextFunction, Router } from 'express';
+import { Router } from 'express';
 import validateRequest from '../../middlewares/validateRequest';
 import { StudentController } from './student.controller';
 import { StudentValidation } from './student.validation';
@@ -36,14 +36,14 @@ router.get(
 );
 
 router.patch(
-  '/:id',
-  validateRequest(StudentValidation.updateStudentZodSchema),
-  StudentController.updateStudent
+  '/bulk',
+  StudentController.bulkUpdateStudents
 );
 
 router.patch(
-  '/bulk',
-  StudentController.bulkUpdateStudents
+  '/:id',
+  validateRequest(StudentValidation.updateStudentZodSchema),
+  StudentController.updateStudent
 );
 
 router.delete(
