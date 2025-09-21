@@ -757,6 +757,12 @@ const getClassesWithAssignmentsZodSchema = z.object({
 //   })
 // });
 
+const bulkCreateStudentsZodSchema = z.object({
+  body: z.object({
+    students: z.array(createStudentZodSchema.shape.body).min(1, 'At least one student is required').max(100, 'Maximum 100 students allowed per request'),
+  }),
+});
+
 export const StudentValidation = {
   createStudentZodSchema,
   updateStudentZodSchema,
@@ -765,6 +771,7 @@ export const StudentValidation = {
   getAllStudentsZodSchema,
   generateStudentIdZodSchema,
   getClassesWithAssignmentsZodSchema,
+  bulkCreateStudentsZodSchema,
   // bulkUpdateStudentsZodSchema,
 };
 

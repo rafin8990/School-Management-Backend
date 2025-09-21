@@ -1099,6 +1099,88 @@ const bulkUpdateStudents = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+/**
+ * @swagger
+ * /api/v1/students/bulk-create:
+ *   post:
+ *     summary: Create multiple students at once
+ *     description: Create multiple students with bulk data including auto-generated student IDs
+ *     tags: [Students]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - students
+ *             properties:
+ *               students:
+ *                 type: array
+ *                 minItems: 1
+ *                 maxItems: 100
+ *                 items:
+ *                   $ref: '#/components/schemas/CreateStudentRequest'
+ *           example:
+ *             students:
+ *               - student_name_en: "John Doe"
+ *                 student_name_bn: "জন ডো"
+ *                 mobile: "01984419614"
+ *                 group_id: 1
+ *                 class_id: 1
+ *                 shift_id: 1
+ *                 academic_year_id: 4
+ *                 school_id: 1
+ *                 father_name_en: "Robert Doe"
+ *                 mother_name_en: "Jane Doe"
+ *               - student_name_en: "Jane Smith"
+ *                 student_name_bn: "জেন স্মিথ"
+ *                 mobile: "01984419615"
+ *                 group_id: 1
+ *                 class_id: 1
+ *                 shift_id: 1
+ *                 academic_year_id: 4
+ *                 school_id: 1
+ *                 father_name_en: "John Smith"
+ *                 mother_name_en: "Mary Smith"
+ *     responses:
+ *       201:
+ *         description: Students created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Student'
+ *       400:
+ *         description: Bad request - validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       409:
+ *         description: Conflict - one or more student IDs already exist
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+const bulkCreateStudents = catchAsync(async (req: Request, res: Response) => {
+  const { students } = req.body;
+  const result = await StudentService.bulkCreateStudents(students);
+  sendResponse<IStudent[]>(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: `${result.length} students created successfully`,
+    data: result,
+  });
+});
+
 export const StudentController = {
   createStudent,
   getAllStudents,
@@ -1108,4 +1190,5 @@ export const StudentController = {
   generateStudentId,
   getClassesWithAssignments,
   bulkUpdateStudents,
+  bulkCreateStudents,
 };

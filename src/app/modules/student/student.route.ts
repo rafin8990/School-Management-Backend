@@ -11,6 +11,12 @@ router.post(
   StudentController.createStudent
 );
 
+router.post(
+  '/bulk-create',
+  validateRequest(StudentValidation.bulkCreateStudentsZodSchema),
+  StudentController.bulkCreateStudents
+);
+
 router.get(
   '/',
   validateRequest(StudentValidation.getAllStudentsZodSchema),

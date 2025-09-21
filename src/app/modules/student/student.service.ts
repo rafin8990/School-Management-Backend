@@ -190,6 +190,145 @@ const createStudent = async (data: IStudent): Promise<IStudent | null> => {
   }
 };
 
+// Bulk create students
+const bulkCreateStudents = async (studentsData: IStudent[]): Promise<IStudent[]> => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const createdStudents: IStudent[] = [];
+
+    for (const data of studentsData) {
+      // Generate student ID if not provided
+      let studentId = data.student_id;
+      if (!studentId) {
+        studentId = await generateStudentId(data.school_id);
+      }
+
+      // Check if student_id already exists for this school
+      if (studentId) {
+        const checkQuery = `
+          SELECT id FROM students 
+          WHERE student_id = $1 AND school_id = $2;
+        `;
+        const existingStudent = await client.query(checkQuery, [
+          studentId,
+          data.school_id,
+        ]);
+
+        if (existingStudent.rows.length > 0) {
+          throw new ApiError(
+            httpStatus.CONFLICT,
+            `Student ID ${studentId} already exists for this school`
+          );
+        }
+      }
+
+      const insertQuery = `
+        INSERT INTO students (
+          student_name_en, student_name_bn, student_id, mobile, group_id, section_id, class_id, shift_id,
+          date_of_birth_en, date_of_birth_bn, roll, category_id, blood_group, gender, national_id,
+          nationality, religion, session_id, academic_year_id, admission_date,
+          student_photo, father_name_en, father_name_bn, father_nid, father_mobile, father_dob_en, father_dob_bn,
+          father_occupation_en, father_occupation_bn, father_income, mother_name_en, mother_name_bn, mother_nid, mother_mobile,
+          mother_dob_en, mother_dob_bn, mother_occupation_en, mother_occupation_bn, mother_income, current_village_en, current_village_bn,
+          current_post_office_en, current_post_office_bn, current_post_code, current_district, current_thana,
+          permanent_village_en, permanent_village_bn, permanent_post_office_en, permanent_post_office_bn, permanent_post_code,
+          permanent_district, permanent_thana, guardian_name_en, guardian_name_bn, guardian_address_en, guardian_address_bn,
+          last_institution, last_class, registration_number, result, year_passed,
+          status, password, school_id
+        )
+        VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
+          $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34,
+          $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50,
+          $51, $52, $53, $54, $55, $56, $57, $58, $59, $60, $61, $62, $63, $64, $65
+        )
+        RETURNING *;
+      `;
+
+      const values = [
+        data.student_name_en,
+        data.student_name_bn || null,
+        studentId,
+        data.mobile || null,
+        data.group_id,
+        data.section_id || null,
+        data.class_id,
+        data.shift_id || null,
+        data.date_of_birth_en || null,
+        data.date_of_birth_bn || null,
+        data.roll || null,
+        data.category_id || null,
+        data.blood_group || null,
+        data.gender || null,
+        data.national_id || null,
+        data.nationality || 'Bangladeshi',
+        data.religion || null,
+        data.session_id || null,
+        data.academic_year_id,
+        data.admission_date || null,
+        data.student_photo || null,
+        data.father_name_en || null,
+        data.father_name_bn || null,
+        data.father_nid || null,
+        data.father_mobile || null,
+        data.father_dob_en || null,
+        data.father_dob_bn || null,
+        data.father_occupation_en || null,
+        data.father_occupation_bn || null,
+        data.father_income || null,
+        data.mother_name_en || null,
+        data.mother_name_bn || null,
+        data.mother_nid || null,
+        data.mother_mobile || null,
+        data.mother_dob_en || null,
+        data.mother_dob_bn || null,
+        data.mother_occupation_en || null,
+        data.mother_occupation_bn || null,
+        data.mother_income || null,
+        data.current_village_en || null,
+        data.current_village_bn || null,
+        data.current_post_office_en || null,
+        data.current_post_office_bn || null,
+        data.current_post_code || null,
+        data.current_district || null,
+        data.current_thana || null,
+        data.permanent_village_en || null,
+        data.permanent_village_bn || null,
+        data.permanent_post_office_en || null,
+        data.permanent_post_office_bn || null,
+        data.permanent_post_code || null,
+        data.permanent_district || null,
+        data.permanent_thana || null,
+        data.guardian_name_en || null,
+        data.guardian_name_bn || null,
+        data.guardian_address_en || null,
+        data.guardian_address_bn || null,
+        data.last_institution || null,
+        data.last_class || null,
+        data.registration_number || null,
+        data.result || null,
+        data.year_passed || null,
+        data.status || 'active',
+        data.password || '123456',
+        data.school_id,
+      ];
+
+      const result = await client.query(insertQuery, values);
+      createdStudents.push(result.rows[0]);
+    }
+
+    await client.query('COMMIT');
+    return createdStudents;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 const getAllStudents = async (
   filters: IStudentFilters,
   paginationOptions: IPaginationOptions
@@ -622,4 +761,5 @@ export const StudentService = {
   generateStudentId,
   getClassesWithAssignments,
   bulkUpdateStudents,
+  bulkCreateStudents,
 };
