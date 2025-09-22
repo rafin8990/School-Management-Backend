@@ -455,6 +455,86 @@ const getSingleStudent = async (id: number): Promise<IStudent | null> => {
   return result.rows[0] || null;
 };
 
+// Search students for migration
+const searchForMigration = async (filters: {
+  school_id: number;
+  class_id: number;
+  group_id?: number;
+  section_id?: number;
+  academic_year_id: number;
+}) => {
+  const conditions: string[] = ['s.school_id = $1', 's.class_id = $2', 's.academic_year_id = $3', "s.status = 'active'"];
+  const values: any[] = [filters.school_id, filters.class_id, filters.academic_year_id];
+  let p = 4;
+  if (filters.group_id) {
+    conditions.push(`s.group_id = $${p++}`);
+    values.push(filters.group_id);
+  }
+  if (filters.section_id) {
+    conditions.push(`s.section_id = $${p++}`);
+    values.push(filters.section_id);
+  }
+
+  const sql = `
+    SELECT s.id, s.student_id, s.student_name_en, s.roll, s.class_id, s.group_id, s.section_id
+    FROM students s
+    WHERE ${conditions.join(' AND ')}
+    ORDER BY s.roll ASC, s.id ASC
+  `;
+  const r = await pool.query(sql, values);
+  return r.rows;
+};
+
+// Migrate selected students
+const migrateStudents = async (payload: {
+  school_id: number;
+  student_ids: number[];
+  target: {
+    class_id: number;
+    academic_year_id: number;
+    group_id?: number;
+    section_id?: number;
+    shift_id: number;
+  };
+}) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const { school_id, student_ids, target } = payload;
+
+    // Update selected students
+    const updates = await client.query(
+      `UPDATE students 
+       SET class_id = $1,
+           group_id = COALESCE($2, group_id),
+           section_id = COALESCE($3, section_id),
+           shift_id = $4,
+           academic_year_id = $5,
+           updated_at = NOW()
+       WHERE school_id = $6 AND id = ANY($7) AND status = 'active'
+       RETURNING id, student_id, student_name_en`,
+      [
+        target.class_id,
+        target.group_id || null,
+        target.section_id || null,
+        target.shift_id,
+        target.academic_year_id,
+        school_id,
+        student_ids,
+      ]
+    );
+
+    await client.query('COMMIT');
+    return { updated: updates.rowCount || 0, rows: updates.rows };
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+};
+
 const updateStudent = async (
   id: number,
   data: Partial<IStudent>
@@ -899,4 +979,6 @@ export const StudentService = {
   getClassesWithAssignments,
   bulkUpdateStudents,
   bulkCreateStudents,
+  searchForMigration,
+  migrateStudents,
 };

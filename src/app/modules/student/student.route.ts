@@ -46,6 +46,17 @@ router.post(
   StudentController.importStudentsFromExcel
 );
 
+// Migration endpoints
+router.post(
+  '/migration/search',
+  StudentController.searchStudentsForMigration
+);
+
+router.post(
+  '/migration',
+  StudentController.migrateStudents
+);
+
 router.get(
   '/:id',
   validateRequest(StudentValidation.getSingleStudentZodSchema),

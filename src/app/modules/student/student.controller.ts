@@ -1065,6 +1065,8 @@ export const StudentController = {
   bulkCreateStudents,
   // will be defined later in file
   importStudentsFromExcel: (() => { throw new Error('not initialized'); }) as any,
+  searchStudentsForMigration: (() => { throw new Error('not initialized'); }) as any,
+  migrateStudents: (() => { throw new Error('not initialized'); }) as any,
 };
 
 // New: Import students from Excel
@@ -1148,3 +1150,66 @@ export const importStudentsFromExcel = catchAsync(async (req: Request, res: Resp
 
 // re-export default object with new method for route import
 Object.assign(StudentController, { importStudentsFromExcel });
+
+// Migration: search students based on source filters
+export const searchStudentsForMigration = catchAsync(async (req: Request, res: Response) => {
+  const schoolId = Number(req.headers['x-school-id'] || req.query.school_id || req.body.school_id || 0);
+  const { class_id, group_id, section_id, academic_year_id } = req.body;
+
+  if (!schoolId || !class_id || !academic_year_id) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'school_id, class_id and academic_year_id are required');
+  }
+
+  const result = await StudentService.searchForMigration({
+    school_id: schoolId,
+    class_id: Number(class_id),
+    group_id: group_id ? Number(group_id) : undefined,
+    section_id: section_id ? Number(section_id) : undefined,
+    academic_year_id: Number(academic_year_id),
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Students loaded',
+    data: result,
+  });
+});
+
+// Migration: execute migration for selected students
+export const migrateStudents = catchAsync(async (req: Request, res: Response) => {
+  const schoolId = Number(req.headers['x-school-id'] || req.body.school_id || 0);
+  const { student_ids, target } = req.body as {
+    student_ids: number[];
+    target: {
+      class_id: number;
+      academic_year_id: number;
+      group_id?: number;
+      section_id?: number;
+      shift_id: number;
+    };
+  };
+
+  if (!schoolId) throw new ApiError(httpStatus.BAD_REQUEST, 'school_id is required');
+  if (!Array.isArray(student_ids) || student_ids.length === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'student_ids array is required');
+  }
+  if (!target?.class_id || !target?.shift_id || !target?.academic_year_id) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'target class_id, shift_id, academic_year_id are required');
+  }
+
+  const result = await StudentService.migrateStudents({
+    school_id: schoolId,
+    student_ids,
+    target,
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `${result.updated} students migrated successfully`,
+    data: result.rows,
+  });
+});
+
+Object.assign(StudentController, { searchStudentsForMigration, migrateStudents });
