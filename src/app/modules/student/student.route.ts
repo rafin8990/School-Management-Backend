@@ -1,9 +1,13 @@
 import { Router } from 'express';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import multer from 'multer';
 import validateRequest from '../../middlewares/validateRequest';
 import { StudentController } from './student.controller';
 import { StudentValidation } from './student.validation';
 
 const router = Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 router.post(
   '/',
@@ -33,6 +37,13 @@ router.get(
   '/classes-with-assignments',
   validateRequest(StudentValidation.getClassesWithAssignmentsZodSchema),
   StudentController.getClassesWithAssignments
+);
+
+// Excel import
+router.post(
+  '/import-excel',
+  upload.single('file'),
+  StudentController.importStudentsFromExcel
 );
 
 router.get(

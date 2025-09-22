@@ -198,30 +198,51 @@ const bulkCreateStudents = async (studentsData: IStudent[]): Promise<IStudent[]>
 
     const createdStudents: IStudent[] = [];
 
-    for (const data of studentsData) {
-      // Generate student ID if not provided
-      let studentId = data.student_id;
-      if (!studentId) {
-        studentId = await generateStudentId(data.school_id);
+    // Maintain next ID counters and per-batch uniqueness per school
+    const schoolIdToNext: Map<number, number> = new Map();
+    const schoolIdToUsed: Map<number, Set<string>> = new Map();
+
+    const getNextForSchool = async (schoolId: number): Promise<string> => {
+      if (!schoolIdToNext.has(schoolId)) {
+        const r = await client.query(
+          `SELECT student_id FROM students WHERE school_id=$1 AND student_id IS NOT NULL ORDER BY student_id DESC LIMIT 1`,
+          [schoolId]
+        );
+        const base = r.rowCount === 0 ? 2025000 : parseInt(r.rows[0].student_id || '2025000', 10);
+        schoolIdToNext.set(schoolId, base);
+        schoolIdToUsed.set(schoolId, new Set());
       }
+      const used = schoolIdToUsed.get(schoolId)!;
+      let next = (schoolIdToNext.get(schoolId) as number) + 1;
+      // ensure not colliding with already used in this batch
+      while (used.has(String(next))) next++;
+      schoolIdToNext.set(schoolId, next);
+      used.add(String(next));
+      return String(next);
+    };
 
-      // Check if student_id already exists for this school
+    for (const data of studentsData) {
+      // Decide student_id: use provided if available and unique; otherwise assign sequentially
+      let studentId = (data.student_id && String(data.student_id).trim() !== '') ? String(data.student_id) : '';
+
       if (studentId) {
-        const checkQuery = `
-          SELECT id FROM students 
-          WHERE student_id = $1 AND school_id = $2;
-        `;
-        const existingStudent = await client.query(checkQuery, [
-          studentId,
-          data.school_id,
-        ]);
-
-        if (existingStudent.rows.length > 0) {
-          throw new ApiError(
-            httpStatus.CONFLICT,
-            `Student ID ${studentId} already exists for this school`
-          );
+        // Check DB duplicate; if exists, override with next sequential instead of throwing
+        const dup = await client.query(
+          `SELECT 1 FROM students WHERE student_id=$1 AND school_id=$2`,
+          [studentId, data.school_id]
+        );
+        const used = schoolIdToUsed.get(data.school_id) || new Set<string>();
+        const isUsedInBatch = used.has(studentId);
+        const dupCount = (dup && typeof dup.rowCount === 'number') ? dup.rowCount : 0;
+        if (dupCount > 0 || isUsedInBatch) {
+          studentId = await getNextForSchool(data.school_id);
+        } else {
+          // mark provided ID as used in batch
+          if (!schoolIdToUsed.has(data.school_id)) schoolIdToUsed.set(data.school_id, new Set());
+          schoolIdToUsed.get(data.school_id)!.add(studentId);
         }
+      } else {
+        studentId = await getNextForSchool(data.school_id);
       }
 
       const insertQuery = `

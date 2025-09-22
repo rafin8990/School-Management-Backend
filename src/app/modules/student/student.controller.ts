@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import * as XLSX from 'xlsx';
 import httpStatus from 'http-status';
 import { paginationFields } from '../../../constants/pagination';
 import ApiError from '../../../errors/ApiError';
@@ -1062,4 +1063,88 @@ export const StudentController = {
   getClassesWithAssignments,
   bulkUpdateStudents,
   bulkCreateStudents,
+  // will be defined later in file
+  importStudentsFromExcel: (() => { throw new Error('not initialized'); }) as any,
 };
+
+// New: Import students from Excel
+export const importStudentsFromExcel = catchAsync(async (req: Request, res: Response) => {
+  const schoolId = Number(req.headers['x-school-id'] || req.body.school_id || 0);
+  const classId = Number(req.body.class_id);
+  const groupId = Number(req.body.group_id);
+  const shiftId = Number(req.body.shift_id);
+  const academicYearId = Number(req.body.academic_year_id);
+  const sectionId = req.body.section_id ? Number(req.body.section_id) : undefined;
+  const categoryId = req.body.category_id ? Number(req.body.category_id) : undefined;
+  const studentIdType = String(req.body.student_id_type || 'with-id');
+
+  if (!schoolId || !classId || !groupId || !shiftId || !academicYearId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'class_id, group_id, shift_id, academic_year_id and X-School-Id are required');
+  }
+
+  if (!req.file) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Excel file is required');
+  }
+
+  const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+  const json: Array<Record<string, any>> = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+  // Expected headers from template
+  // Student ID, Roll No., Name, Gender, Date Of Birth, Religion, Father's Name, Mother's Name, Mobile No.
+
+  const students = json.map((row) => {
+    const studentName = row['Name'] || row['Student Name'] || row['student_name_en'];
+    const studentId = row['Student ID'] || row['student_id'] || '';
+    const roll = row['Roll No.'] || row['Roll'] || '';
+    const gender = row['Gender'] || '';
+    const dob = row['Date Of Birth'] || row['DOB'] || '';
+    const religion = row['Religion'] || '';
+    const fatherName = row["Father's Name"] || row['Father Name'] || '';
+    const motherName = row["Mother's Name"] || row['Mother Name'] || '';
+    const mobile = row['Mobile No.'] || row['Mobile'] || '';
+
+    if (!studentName) {
+      return null;
+    }
+
+    const s: Partial<IStudent> = {
+      student_name_en: String(studentName),
+      student_id: studentIdType === 'with-id' && String(studentId).trim() !== '' ? String(studentId) : undefined,
+      roll: String(roll).trim() !== '' ? Number(roll) : undefined,
+      gender: String(gender || '').toLowerCase() || undefined,
+      date_of_birth_en: dob ? new Date(dob).toISOString().split('T')[0] : undefined,
+      religion: religion || undefined,
+      father_name_en: fatherName || undefined,
+      mother_name_en: motherName || undefined,
+      mobile: mobile ? String(mobile) : undefined,
+      class_id: classId,
+      group_id: groupId,
+      section_id: sectionId,
+      shift_id: shiftId,
+      category_id: categoryId,
+      academic_year_id: academicYearId,
+      school_id: schoolId,
+      status: 'active',
+    } as Partial<IStudent>;
+
+    return s;
+  }).filter(Boolean) as Partial<IStudent>[];
+
+  if (students.length === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'No valid rows found in the Excel file');
+  }
+
+  const result = await StudentService.bulkCreateStudents(students as any);
+
+  sendResponse<IStudent[]>(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: `${result.length} students imported successfully`,
+    data: result,
+  });
+});
+
+// re-export default object with new method for route import
+Object.assign(StudentController, { importStudentsFromExcel });
