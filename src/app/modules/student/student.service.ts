@@ -366,7 +366,7 @@ const getAllStudents = async (
     sortBy: paginationOptions.sortBy || 'id',
   });
 
-  const conditions: string[] = [];
+  const conditions: string[] = ["s.disabled = false"]; // only non-disabled students
   const values: any[] = [];
   let paramIndex = 1;
 
@@ -449,7 +449,7 @@ const getSingleStudent = async (id: number): Promise<IStudent | null> => {
     LEFT JOIN category cat ON s.category_id = cat.id
     LEFT JOIN academic_year ay ON s.academic_year_id = ay.id
     LEFT JOIN academic_session asess ON s.session_id = asess.id
-    WHERE s.id = $1;
+    WHERE s.id = $1 AND s.disabled = false;
   `;
   const result = await pool.query(query, [id]);
   return result.rows[0] || null;
@@ -463,7 +463,7 @@ const searchForMigration = async (filters: {
   section_id?: number;
   academic_year_id: number;
 }) => {
-  const conditions: string[] = ['s.school_id = $1', 's.class_id = $2', 's.academic_year_id = $3', "s.status = 'active'"];
+  const conditions: string[] = ['s.school_id = $1', 's.class_id = $2', 's.academic_year_id = $3', "s.status = 'active'", 's.disabled = false'];
   const values: any[] = [filters.school_id, filters.class_id, filters.academic_year_id];
   let p = 4;
   if (filters.group_id) {
@@ -535,6 +535,26 @@ const migrateStudents = async (payload: {
   }
 };
 
+// Soft delete students by setting disabled=true
+const softDeleteStudents = async (schoolId: number, ids: number[]) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const r = await client.query(
+      `UPDATE students SET disabled = TRUE, updated_at = NOW()
+       WHERE school_id = $1 AND id = ANY($2) AND disabled = FALSE
+       RETURNING id, student_id, student_name_en`,
+      [schoolId, ids]
+    );
+    await client.query('COMMIT');
+    return { updated: r.rowCount || 0, rows: r.rows };
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+};
 const updateStudent = async (
   id: number,
   data: Partial<IStudent>
@@ -981,4 +1001,5 @@ export const StudentService = {
   bulkCreateStudents,
   searchForMigration,
   migrateStudents,
+  softDeleteStudents,
 };

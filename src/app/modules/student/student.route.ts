@@ -57,6 +57,12 @@ router.post(
   StudentController.migrateStudents
 );
 
+// Soft delete students
+router.post(
+  '/soft-delete',
+  StudentController.softDeleteStudents
+);
+
 router.get(
   '/:id',
   validateRequest(StudentValidation.getSingleStudentZodSchema),

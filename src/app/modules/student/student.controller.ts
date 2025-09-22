@@ -1067,6 +1067,7 @@ export const StudentController = {
   importStudentsFromExcel: (() => { throw new Error('not initialized'); }) as any,
   searchStudentsForMigration: (() => { throw new Error('not initialized'); }) as any,
   migrateStudents: (() => { throw new Error('not initialized'); }) as any,
+  softDeleteStudents: (() => { throw new Error('not initialized'); }) as any,
 };
 
 // New: Import students from Excel
@@ -1213,3 +1214,22 @@ export const migrateStudents = catchAsync(async (req: Request, res: Response) =>
 });
 
 Object.assign(StudentController, { searchStudentsForMigration, migrateStudents });
+
+// Soft delete students (set disabled=true)
+export const softDeleteStudents = catchAsync(async (req: Request, res: Response) => {
+  const schoolId = Number(req.headers['x-school-id'] || req.body.school_id || 0);
+  const { student_ids } = req.body as { student_ids: number[] };
+  if (!schoolId) throw new ApiError(httpStatus.BAD_REQUEST, 'school_id is required');
+  if (!Array.isArray(student_ids) || student_ids.length === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'student_ids array is required');
+  }
+  const result = await StudentService.softDeleteStudents(schoolId, student_ids);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `${result.updated} students disabled successfully`,
+    data: result.rows,
+  });
+});
+
+Object.assign(StudentController, { softDeleteStudents });
