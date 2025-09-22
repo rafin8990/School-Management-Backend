@@ -57,7 +57,6 @@ router.patch(
 
 router.patch(
   '/:id',
-  validateRequest(StudentValidation.updateStudentZodSchema),
   StudentController.updateStudent
 );
 

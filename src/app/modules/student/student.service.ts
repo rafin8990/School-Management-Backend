@@ -466,10 +466,68 @@ const updateStudent = async (
     const values: any[] = [];
     let paramIndex = 1;
 
+    // Helper function to sanitize values
+    const sanitizeValue = (value: any, key: string): any => {
+      if (value === undefined || value === null) {
+        return null;
+      }
+      
+      // Handle empty strings for various field types
+      if (value === '') {
+        const numericFields = [
+          'group_id', 'section_id', 'class_id', 'shift_id', 'academic_year_id', 
+          'session_id', 'category_id', 'roll', 'father_income', 'mother_income',
+          'current_district', 'current_thana', 'permanent_district', 'permanent_thana'
+        ];
+        const dateFields = [
+          'date_of_birth_en', 'date_of_birth_bn', 'admission_date', 
+          'father_dob_en', 'father_dob_bn', 'mother_dob_en', 'mother_dob_bn'
+        ];
+        const enumFields = [
+          'blood_group', 'gender', 'religion', 'nationality'
+        ];
+        
+        if (numericFields.includes(key) || dateFields.includes(key) || enumFields.includes(key)) {
+          return null;
+        }
+        return value;
+      }
+      
+      // Convert string numbers to actual numbers for numeric fields
+      const numericFields = [
+        'group_id', 'section_id', 'class_id', 'shift_id', 'academic_year_id', 
+        'session_id', 'category_id', 'roll', 'father_income', 'mother_income',
+        'current_district', 'current_thana', 'permanent_district', 'permanent_thana'
+      ];
+      if (numericFields.includes(key) && typeof value === 'string' && !isNaN(Number(value))) {
+        return Number(value);
+      }
+      
+      // Handle date fields - convert to proper date format or null
+      const dateFields = [
+        'date_of_birth_en', 'date_of_birth_bn', 'admission_date', 
+        'father_dob_en', 'father_dob_bn', 'mother_dob_en', 'mother_dob_bn'
+      ];
+      if (dateFields.includes(key) && typeof value === 'string' && value.trim() !== '') {
+        try {
+          const date = new Date(value);
+          if (!isNaN(date.getTime())) {
+            return date.toISOString().split('T')[0]; // Return YYYY-MM-DD format
+          }
+        } catch (error) {
+          console.error(`Error parsing date for field ${key}:`, error);
+        }
+        return null;
+      }
+      
+      return value;
+    };
+
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined) {
+        const sanitizedValue = sanitizeValue(value, key);
         updateFields.push(`${key} = $${paramIndex}`);
-        values.push(value);
+        values.push(sanitizedValue);
         paramIndex++;
       }
     });
@@ -704,6 +762,63 @@ const bulkUpdateStudents = async (
           continue;
         }
 
+        // Helper function to sanitize values
+        const sanitizeValue = (value: any, key: string): any => {
+          if (value === undefined || value === null) {
+            return null;
+          }
+          
+          // Handle empty strings for various field types
+          if (value === '') {
+            const numericFields = [
+              'group_id', 'section_id', 'class_id', 'shift_id', 'academic_year_id', 
+              'session_id', 'category_id', 'roll', 'father_income', 'mother_income',
+              'current_district', 'current_thana', 'permanent_district', 'permanent_thana'
+            ];
+            const dateFields = [
+              'date_of_birth_en', 'date_of_birth_bn', 'admission_date', 
+              'father_dob_en', 'father_dob_bn', 'mother_dob_en', 'mother_dob_bn'
+            ];
+            const enumFields = [
+              'blood_group', 'gender', 'religion', 'nationality'
+            ];
+            
+            if (numericFields.includes(key) || dateFields.includes(key) || enumFields.includes(key)) {
+              return null;
+            }
+            return value;
+          }
+          
+          // Convert string numbers to actual numbers for numeric fields
+          const numericFields = [
+            'group_id', 'section_id', 'class_id', 'shift_id', 'academic_year_id', 
+            'session_id', 'category_id', 'roll', 'father_income', 'mother_income',
+            'current_district', 'current_thana', 'permanent_district', 'permanent_thana'
+          ];
+          if (numericFields.includes(key) && typeof value === 'string' && !isNaN(Number(value))) {
+            return Number(value);
+          }
+          
+          // Handle date fields - convert to proper date format or null
+          const dateFields = [
+            'date_of_birth_en', 'date_of_birth_bn', 'admission_date', 
+            'father_dob_en', 'father_dob_bn', 'mother_dob_en', 'mother_dob_bn'
+          ];
+          if (dateFields.includes(key) && typeof value === 'string' && value.trim() !== '') {
+            try {
+              const date = new Date(value);
+              if (!isNaN(date.getTime())) {
+                return date.toISOString().split('T')[0]; // Return YYYY-MM-DD format
+              }
+            } catch (error) {
+              console.error(`Error parsing date for field ${key}:`, error);
+            }
+            return null;
+          }
+          
+          return value;
+        };
+
         const setParts: string[] = [];
         const values: any[] = [];
         let p = 1;
@@ -711,7 +826,8 @@ const bulkUpdateStudents = async (
         for (const [k, v] of entries) {
           const setPart = `${k} = $${p}`;
           setParts.push(setPart);
-          values.push(v);
+          const sanitizedValue = sanitizeValue(v, k);
+          values.push(sanitizedValue);
           p++;
         }
         setParts.push('updated_at = NOW()');
