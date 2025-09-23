@@ -13,7 +13,7 @@ CREATE TABLE students (
     student_name_bn VARCHAR(150),
     student_id VARCHAR(100),
     mobile VARCHAR(20),
-    group_id INTEGER NOT NULL REFERENCES group(id) ON DELETE RESTRICT,
+    group_id INTEGER NOT NULL REFERENCES student_group(id) ON DELETE RESTRICT,
     section_id INTEGER REFERENCES section(id) ON DELETE RESTRICT,
     class_id INTEGER NOT NULL REFERENCES class(id) ON DELETE RESTRICT,
     shift_id INTEGER NOT NULL REFERENCES shift(id) ON DELETE RESTRICT,
