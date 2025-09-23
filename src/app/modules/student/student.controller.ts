@@ -1094,46 +1094,124 @@ export const importStudentsFromExcel = catchAsync(async (req: Request, res: Resp
   const worksheet = workbook.Sheets[sheetName];
   const json: Array<Record<string, any>> = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
 
-  // Expected headers from template
-  // Student ID, Roll No., Name, Gender, Date Of Birth, Religion, Father's Name, Mother's Name, Mobile No.
+  // Helper: normalize header keys for robust matching (case/space/punctuation/Bangla safe)
+  const normalizeKey = (key: string): string =>
+    String(key || '')
+      .toLowerCase()
+      .replace(/['`.]/g, '')
+      .replace(/\s+/g, '')
+      .replace(/[_-]+/g, '')
+      .trim();
 
-  const students = json.map((row) => {
-    const studentName = row['Name'] || row['Student Name'] || row['student_name_en'];
-    const studentId = row['Student ID'] || row['student_id'] || '';
-    const roll = row['Roll No.'] || row['Roll'] || '';
-    const gender = row['Gender'] || '';
-    const dob = row['Date Of Birth'] || row['DOB'] || '';
-    const religion = row['Religion'] || '';
-    const fatherName = row["Father's Name"] || row['Father Name'] || '';
-    const motherName = row["Mother's Name"] || row['Mother Name'] || '';
-    const mobile = row['Mobile No.'] || row['Mobile'] || '';
+  const variants = {
+    name: new Set([
+      'name', 'studentname', 'student_name_en', 'studentnameen', 'student_name', 'nam',
+      // Bangla
+      'নাম', 'শিক্ষার্থীরনাম', 'শিক্ষার্থীর নাম'
+    ].map(normalizeKey)),
+    studentId: new Set([
+      'studentid', 'student_id', 'id',
+      'আইডি', 'শিক্ষার্থীআইডি'
+    ].map(normalizeKey)),
+    roll: new Set([
+      'rollno', 'rollno.', 'roll', 'rollnumber',
+      'রোল'
+    ].map(normalizeKey)),
+    gender: new Set([
+      'gender', 'লিঙ্গ'
+    ].map(normalizeKey)),
+    dob: new Set([
+      'dateofbirth', 'dob', 'birthdate', 'dateofbirth(en)',
+      'জন্মতারিখ'
+    ].map(normalizeKey)),
+    religion: new Set([
+      'religion', 'ধর্ম'
+    ].map(normalizeKey)),
+    fatherName: new Set([
+      "father'sname", 'fathername', 'father', 'father_name_en',
+      'পিতারনাম', 'বাবারনাম'
+    ].map(normalizeKey)),
+    motherName: new Set([
+      "mother'sname", 'mothername', 'mother', 'mother_name_en',
+      'মাতারনাম', 'মায়েরনাম'
+    ].map(normalizeKey)),
+    mobile: new Set([
+      'mobileno', 'mobileno.', 'mobile', 'phonenumber', 'phone',
+      'মোবাইল', 'মোবাইলনম্বর'
+    ].map(normalizeKey)),
+  } as const;
 
-    if (!studentName) {
-      return null;
+  // Excel date conversion helper (handles serial numbers)
+  const toIsoDate = (val: any): string | undefined => {
+    if (!val) return undefined;
+    if (typeof val === 'string') {
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? undefined : d.toISOString().split('T')[0];
     }
+    if (typeof val === 'number') {
+      // Excel date serial -> JS Date (Excel epoch 1899-12-30)
+      const epoch = new Date(Math.round((val - 25569) * 86400 * 1000));
+      return isNaN(epoch.getTime()) ? undefined : epoch.toISOString().split('T')[0];
+    }
+    return undefined;
+  };
 
-    const s: Partial<IStudent> = {
-      student_name_en: String(studentName),
-      student_id: studentIdType === 'with-id' && String(studentId).trim() !== '' ? String(studentId) : undefined,
-      roll: String(roll).trim() !== '' ? Number(roll) : undefined,
-      gender: String(gender || '').toLowerCase() || undefined,
-      date_of_birth_en: dob ? new Date(dob).toISOString().split('T')[0] : undefined,
-      religion: religion || undefined,
-      father_name_en: fatherName || undefined,
-      mother_name_en: motherName || undefined,
-      mobile: mobile ? String(mobile) : undefined,
-      class_id: classId,
-      group_id: groupId,
-      section_id: sectionId,
-      shift_id: shiftId,
-      category_id: categoryId,
-      academic_year_id: academicYearId,
-      school_id: schoolId,
-      status: 'active',
-    } as Partial<IStudent>;
+  const students = json
+    .map((row) => {
+      // Build normalized key map
+      const norm: Record<string, any> = {};
+      Object.keys(row).forEach((k) => {
+        norm[normalizeKey(k)] = row[k];
+      });
 
-    return s;
-  }).filter(Boolean) as Partial<IStudent>[];
+      const pick = (keys: ReadonlySet<string>) => {
+        for (const k of Object.keys(norm)) {
+          if (keys.has(k)) return norm[k];
+        }
+        return '';
+      };
+
+      const studentName = pick(variants.name);
+      const studentId = pick(variants.studentId);
+      const roll = pick(variants.roll);
+      const gender = pick(variants.gender);
+      const dob = pick(variants.dob);
+      const religion = pick(variants.religion);
+      const fatherName = pick(variants.fatherName);
+      const motherName = pick(variants.motherName);
+      const mobile = pick(variants.mobile);
+
+      // Skip empty rows (no name)
+      if (!String(studentName || '').trim()) {
+        return null;
+      }
+
+      const s: Partial<IStudent> = {
+        student_name_en: String(studentName).trim(),
+        student_id:
+          studentIdType === 'with-id' && String(studentId).trim() !== ''
+            ? String(studentId).trim()
+            : undefined,
+        roll: String(roll).trim() !== '' && !isNaN(Number(roll)) ? Number(roll) : undefined,
+        gender: String(gender || '').trim().toLowerCase() || undefined,
+        date_of_birth_en: toIsoDate(dob),
+        religion: String(religion || '').trim() || undefined,
+        father_name_en: String(fatherName || '').trim() || undefined,
+        mother_name_en: String(motherName || '').trim() || undefined,
+        mobile: String(mobile || '').trim() || undefined,
+        class_id: classId,
+        group_id: groupId,
+        section_id: sectionId,
+        shift_id: shiftId,
+        category_id: categoryId,
+        academic_year_id: academicYearId,
+        school_id: schoolId,
+        status: 'active',
+      } as Partial<IStudent>;
+
+      return s;
+    })
+    .filter(Boolean) as Partial<IStudent>[];
 
   if (students.length === 0) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'No valid rows found in the Excel file');
