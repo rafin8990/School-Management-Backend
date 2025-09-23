@@ -21,6 +21,7 @@ import { AcademicYearRoutes } from '../modules/basic-setting/academic-year/acade
 import { AcademicSessionRoutes } from '../modules/basic-setting/academic-session/academicSession.route';
 import ClassPeriodRoutes from '../modules/basic-setting/class-period/classPeriod.route';
 import { StudentRoutes } from '../modules/student/student.route';
+import { TransferCertificateRoutes } from '../modules/transferCertificate/transferCertificate.routes';
 
 
 const router = express.Router();
@@ -113,6 +114,10 @@ const moduleRoutes = [
  {
    path:'/students',
    routes:StudentRoutes
+ },
+ {
+   path:'/transfer-certificates',
+   routes:TransferCertificateRoutes
  }
 ];
 
