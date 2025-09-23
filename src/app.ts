@@ -21,7 +21,9 @@ app.use(cors({
       'http://localhost:3000', 
       'http://localhost:4000', 
       'http://127.0.0.1:3000', 
-      'http://127.0.0.1:4000'
+      'http://127.0.0.1:4000',
+      'https://academichelperbd.xyz/',
+      'https://academichelperbd.xyz'
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1) {
