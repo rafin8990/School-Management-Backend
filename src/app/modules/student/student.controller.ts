@@ -1178,18 +1178,56 @@ export const importStudentsFromExcel = catchAsync(async (req: Request, res: Resp
     json.push(obj);
   }
 
-  // Excel date conversion helper (handles serial numbers)
+  // Excel date conversion helper (handles serial numbers and common string formats)
   const toIsoDate = (val: any): string | undefined => {
-    if (!val) return undefined;
-    if (typeof val === 'string') {
-      const d = new Date(val);
-      return isNaN(d.getTime()) ? undefined : d.toISOString().split('T')[0];
-    }
-    if (typeof val === 'number') {
-      // Excel date serial -> JS Date (Excel epoch 1899-12-30)
-      const epoch = new Date(Math.round((val - 25569) * 86400 * 1000));
+    if (val === null || val === undefined) return undefined;
+
+    // Excel serial number
+    if (typeof val === 'number' && isFinite(val)) {
+      const epoch = new Date(Math.round((val - 25569) * 86400 * 1000)); // Excel epoch 1899-12-30
       return isNaN(epoch.getTime()) ? undefined : epoch.toISOString().split('T')[0];
     }
+
+    const raw = String(val).trim();
+    if (!raw) return undefined;
+
+    // yyyy-mm-dd (or with / .)
+    const isoLike = raw.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+    if (isoLike) {
+      const y = Number(isoLike[1]);
+      const m = Number(isoLike[2]);
+      const d = Number(isoLike[3]);
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      if (!isNaN(dt.getTime())) return dt.toISOString().split('T')[0];
+    }
+
+    // dd-mm-yyyy, dd/mm/yyyy, d-m-yy, m/d/yyyy etc.
+    const parts = raw.replace(/[.]/g, '-').replace(/[\/]/g, '-').split('-').map((p) => p.trim());
+    if (parts.length === 3) {
+      let a = parts[0], b = parts[1], c = parts[2];
+      const isYearFirst = a.length === 4;
+      let day: number, month: number, year: number;
+      if (isYearFirst) {
+        year = Number(a); month = Number(b); day = Number(c);
+      } else {
+        const n1 = Number(a), n2 = Number(b);
+        if (n1 > 12) { day = n1; month = n2; }
+        else if (n2 > 12) { month = n1; day = n2; }
+        else { day = n1; month = n2; }
+        year = c.length === 2 ? (Number(c) >= 50 ? 1900 + Number(c) : 2000 + Number(c)) : Number(c);
+      }
+      if (
+        Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day) &&
+        year >= 1900 && month >= 1 && month <= 12 && day >= 1 && day <= 31
+      ) {
+        const dt = new Date(Date.UTC(year, month - 1, day));
+        if (!isNaN(dt.getTime())) return dt.toISOString().split('T')[0];
+      }
+    }
+
+    // fallback
+    const parsed = new Date(raw);
+    if (!isNaN(parsed.getTime())) return parsed.toISOString().split('T')[0];
     return undefined;
   };
 
