@@ -22,6 +22,10 @@ import { AcademicSessionRoutes } from '../modules/basic-setting/academic-session
 import ClassPeriodRoutes from '../modules/basic-setting/class-period/classPeriod.route';
 import { StudentRoutes } from '../modules/student/student.route';
 import { TransferCertificateRoutes } from '../modules/transferCertificate/transferCertificate.routes';
+import { ClassSubjectsRoutes } from '../modules/exam-settings/class-subjects/classSubjects.route';
+import { ShortCodeRoutes } from '../modules/exam-settings/short-code/shortCode.route';
+import { SetExamMarksRoutes } from '../modules/exam-settings/set-exam-marks/setExamMarks.route';
+import { FourthSubjectRoutes } from '../modules/exam-settings/fourth-subject/fourthSubject.route';
 
 
 const router = express.Router();
@@ -118,6 +122,22 @@ const moduleRoutes = [
  {
    path:'/transfer-certificates',
    routes:TransferCertificateRoutes
+ },
+ {
+   path:'/exam-settings/short-codes',
+   routes:ShortCodeRoutes
+ },
+ {
+   path:'/exam-settings/set-exam-marks',
+   routes:SetExamMarksRoutes
+ },
+ {
+   path:'/exam-settings/fourth-subject',
+   routes:FourthSubjectRoutes
+ },
+ {
+   path:'/exam-settings/class-subjects',
+   routes:ClassSubjectsRoutes
  }
 ];
 
