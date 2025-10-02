@@ -35,7 +35,11 @@ import { ExamPublishRoutes } from '../modules/exam-settings/exam-publish/examPub
 import { SequentialExamRoutes } from '../modules/exam-settings/sequential-exam/sequentialExam.route';
 import { MarkInputRoutes } from '../modules/ExamAndResult/MarkInput/markInput.route';
 import { ProgressReportRoutes } from '../modules/ExamAndResult/ProgressReport/progressReport.route';
+import { UnassignedSubjectReportRoutes } from '../modules/ExamAndResult/UnassignedSubjectReport/unassignedSubjectReport.route';
+import { SubjectSummaryRoutes } from '../modules/ExamAndResult/SubjectPassFailSummary/subjectSummary.route';
+import { SectionGradeSummaryRoutes } from '../modules/ExamAndResult/SectionGradeSummary/sectionGradeSummary.route';
 import { tabulationReportRoutes } from '../modules/ExamAndResult/TabulationReport/tabulationReport.routes';
+import { PassFailPercentageRoutes } from '../modules/ExamAndResult/PassFailPercentageReport/passFailPercentage.route';
 
 
 const router = express.Router();
@@ -187,6 +191,22 @@ const moduleRoutes = [
  {
    path:'/exam-result/progress-report',
    routes:ProgressReportRoutes
+ },
+ {
+   path:'/exam-result/unassigned-subject-report',
+   routes:UnassignedSubjectReportRoutes
+ },
+ {
+   path:'/exam-result/pass-fail-percentage',
+   routes:PassFailPercentageRoutes
+ },
+ {
+   path:'/exam-result/subject-pass-fail-summary',
+   routes:SubjectSummaryRoutes
+ },
+ {
+   path:'/exam-result/section-grade-summary',
+   routes:SectionGradeSummaryRoutes
  },
  {
    path:'/exam-result',
