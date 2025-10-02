@@ -11,3 +11,4 @@ const catchAsync =
   };
 
 export default catchAsync;
+export { catchAsync };

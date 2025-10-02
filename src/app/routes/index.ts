@@ -26,6 +26,16 @@ import { ClassSubjectsRoutes } from '../modules/exam-settings/class-subjects/cla
 import { ShortCodeRoutes } from '../modules/exam-settings/short-code/shortCode.route';
 import { SetExamMarksRoutes } from '../modules/exam-settings/set-exam-marks/setExamMarks.route';
 import { FourthSubjectRoutes } from '../modules/exam-settings/fourth-subject/fourthSubject.route';
+import { ReportRoutes } from '../modules/exam-settings/report/report.route';
+import { SignatureRoutes } from '../modules/exam-settings/signature/signature.route';
+import { GradeRoutes } from '../modules/exam-settings/grade/grade.route';
+import { GradeSetupRoutes } from '../modules/exam-settings/grade-setup/grade-setup.route';
+import { SetSignatureRoutes } from '../modules/exam-settings/set-signature/setSignature.route';
+import { ExamPublishRoutes } from '../modules/exam-settings/exam-publish/examPublish.route';
+import { SequentialExamRoutes } from '../modules/exam-settings/sequential-exam/sequentialExam.route';
+import { MarkInputRoutes } from '../modules/ExamAndResult/MarkInput/markInput.route';
+import { ProgressReportRoutes } from '../modules/ExamAndResult/ProgressReport/progressReport.route';
+import { tabulationReportRoutes } from '../modules/ExamAndResult/TabulationReport/tabulationReport.routes';
 
 
 const router = express.Router();
@@ -138,6 +148,49 @@ const moduleRoutes = [
  {
    path:'/exam-settings/class-subjects',
    routes:ClassSubjectsRoutes
+ },
+ {
+   path:'/exam-settings/reports',
+   routes:ReportRoutes
+ },
+ {
+   path:'/exam-settings/signatures',
+   routes:SignatureRoutes
+ },
+ {
+   path:'/exam-settings/grades',
+   routes:GradeRoutes
+ },
+ {
+   path:'/exam-settings/grade-setup',
+   routes:GradeSetupRoutes
+ }
+ ,
+ {
+   path:'/exam-settings/set-signatures',
+   routes:SetSignatureRoutes
+ }
+ ,
+ {
+   path:'/exam-settings/exam-publish',
+   routes:ExamPublishRoutes
+ }
+ ,
+ {
+   path:'/exam-settings/sequential-exam',
+   routes:SequentialExamRoutes
+ },
+ {
+   path:'/exam-result/mark-input',
+   routes:MarkInputRoutes
+ },
+ {
+   path:'/exam-result/progress-report',
+   routes:ProgressReportRoutes
+ },
+ {
+   path:'/exam-result',
+   routes:tabulationReportRoutes
  }
 ];
 
