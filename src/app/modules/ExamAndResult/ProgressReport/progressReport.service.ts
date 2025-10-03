@@ -120,18 +120,18 @@ export const ProgressReportService = {
       
       const gradePointsResult = await pool.query(gradePointsQuery, [gradeSetupId]);
       
-      // If no grade points found, use default
+      // If no grade points found, use default percentage-based setup
       if (gradePointsResult.rows.length === 0) {
         return {
           grade_setup_id: 0,
           grade_points: [
-            { mark_point_first: 100, mark_point_second: 80, letter_grade: 'A+', grade_point: 5, note: '' },
-            { mark_point_first: 79, mark_point_second: 70, letter_grade: 'A', grade_point: 4, note: '' },
-            { mark_point_first: 69, mark_point_second: 60, letter_grade: 'A-', grade_point: 3.5, note: '' },
-            { mark_point_first: 59, mark_point_second: 50, letter_grade: 'B', grade_point: 3, note: '' },
-            { mark_point_first: 49, mark_point_second: 40, letter_grade: 'C', grade_point: 2, note: '' },
-            { mark_point_first: 39, mark_point_second: 33, letter_grade: 'D', grade_point: 1, note: '' },
-            { mark_point_first: 32, mark_point_second: 0, letter_grade: 'F', grade_point: 0, note: '' },
+            { mark_point_first: 80, mark_point_second: 100, letter_grade: 'A+', grade_point: 5, note: '' },
+            { mark_point_first: 70, mark_point_second: 79, letter_grade: 'A', grade_point: 4, note: '' },
+            { mark_point_first: 60, mark_point_second: 69, letter_grade: 'A-', grade_point: 3.5, note: '' },
+            { mark_point_first: 50, mark_point_second: 59, letter_grade: 'B', grade_point: 3, note: '' },
+            { mark_point_first: 40, mark_point_second: 49, letter_grade: 'C', grade_point: 2, note: '' },
+            { mark_point_first: 33, mark_point_second: 39, letter_grade: 'D', grade_point: 1, note: '' },
+            { mark_point_first: 0, mark_point_second: 32, letter_grade: 'F', grade_point: 0, note: '' },
           ],
         };
       }
@@ -142,17 +142,17 @@ export const ProgressReportService = {
       };
     }
     
-    // Return default grade setup if no custom setup found
+    // Return default percentage-based grade setup if no custom setup found
     return {
       grade_setup_id: 0,
       grade_points: [
-        { mark_point_first: 100, mark_point_second: 80, letter_grade: 'A+', grade_point: 5, note: '' },
-        { mark_point_first: 79, mark_point_second: 70, letter_grade: 'A', grade_point: 4, note: '' },
-        { mark_point_first: 69, mark_point_second: 60, letter_grade: 'A-', grade_point: 3.5, note: '' },
-        { mark_point_first: 59, mark_point_second: 50, letter_grade: 'B', grade_point: 3, note: '' },
-        { mark_point_first: 49, mark_point_second: 40, letter_grade: 'C', grade_point: 2, note: '' },
-        { mark_point_first: 39, mark_point_second: 33, letter_grade: 'D', grade_point: 1, note: '' },
-        { mark_point_first: 32, mark_point_second: 0, letter_grade: 'F', grade_point: 0, note: '' },
+        { mark_point_first: 80, mark_point_second: 100, letter_grade: 'A+', grade_point: 5, note: '' },
+        { mark_point_first: 70, mark_point_second: 79, letter_grade: 'A', grade_point: 4, note: '' },
+        { mark_point_first: 60, mark_point_second: 69, letter_grade: 'A-', grade_point: 3.5, note: '' },
+        { mark_point_first: 50, mark_point_second: 59, letter_grade: 'B', grade_point: 3, note: '' },
+        { mark_point_first: 40, mark_point_second: 49, letter_grade: 'C', grade_point: 2, note: '' },
+        { mark_point_first: 33, mark_point_second: 39, letter_grade: 'D', grade_point: 1, note: '' },
+        { mark_point_first: 0, mark_point_second: 32, letter_grade: 'F', grade_point: 0, note: '' },
       ],
     };
   },
@@ -367,7 +367,7 @@ export const ProgressReportService = {
         existingSubject.full_marks = existingSubject.short_codes.reduce((sum, sc) => sum + (sc.full_marks || 0), 0);
         
         // Recalculate grade and GPA for this subject
-        const subjectGradeResult = this.calculateSubjectGrade(existingSubject.total_marks, existingSubject.full_marks, gradeSetup, 1);
+        const subjectGradeResult = this.calculateSubjectGrade(existingSubject.total_marks, existingSubject.full_marks, gradeSetup, existingSubject.short_codes, 1);
         existingSubject.grade = subjectGradeResult.grade;
         existingSubject.gpa = subjectGradeResult.gpa;
       } else {
@@ -376,7 +376,7 @@ export const ProgressReportService = {
         const totalObtainedMarks = shortCodes.reduce((sum, sc) => sum + (sc.obtained_marks || 0), 0);
         
         // Calculate grade and GPA for this subject
-        const subjectGradeResult = this.calculateSubjectGrade(totalObtainedMarks, totalFullMarks, gradeSetup, 1);
+        const subjectGradeResult = this.calculateSubjectGrade(totalObtainedMarks, totalFullMarks, gradeSetup, shortCodes, 1);
         
         const subjectData: ISubjectProgressData = {
           subject_id: row.subject_id,
@@ -400,57 +400,86 @@ export const ProgressReportService = {
       let totalFullMarks = 0;
       let totalGpa = 0;
       let subjectCount = 0;
+      let hasFailedAnySubject = false;
       
       for (const subject of student.subjects) {
         totalMarks += subject.total_marks;
         totalFullMarks += subject.full_marks;
         totalGpa += subject.gpa;
         subjectCount++;
+        
+        // Check if student failed this subject (grade is F)
+        if (subject.grade === 'F') {
+          hasFailedAnySubject = true;
+        }
       }
       
       student.total_marks = totalMarks;
       student.total_full_marks = totalFullMarks;
       
-      // Calculate grade based on total marks percentage
-      if (totalFullMarks > 0) {
-        const totalMarksNum = Number(totalMarks) || 0;
-        const totalFullMarksNum = Number(totalFullMarks) || 0;
-        const totalPercentage = (totalMarksNum / totalFullMarksNum) * 100;
-        
-        // Find the appropriate grade based on total percentage
-        let foundGrade = false;
-        for (const gradePoint of gradeSetup.grade_points) {
-          if (totalPercentage >= gradePoint.mark_point_first && totalPercentage <= gradePoint.mark_point_second) {
-            student.grade = gradePoint.letter_grade;
-            student.gpa = Number(gradePoint.grade_point) || 0;
-            student.comment = gradePoint.note || this.getDefaultComment(gradePoint.letter_grade);
-            foundGrade = true;
-            break;
+      // If failed any subject, total grade is F and GPA is 0
+      if (hasFailedAnySubject) {
+        student.grade = 'F';
+        student.gpa = 0;
+        student.comment = 'Failed in one or more subjects. Please work harder.';
+      } else {
+        // Calculate grade based on total marks percentage
+        if (totalFullMarks > 0) {
+          const totalMarksNum = Number(totalMarks) || 0;
+          const totalFullMarksNum = Number(totalFullMarks) || 0;
+          const totalPercentage = (totalMarksNum / totalFullMarksNum) * 100;
+          
+          // Find the appropriate grade based on total percentage
+          let foundGrade = false;
+          for (const gradePoint of gradeSetup.grade_points) {
+            if (totalPercentage >= gradePoint.mark_point_first && totalPercentage <= gradePoint.mark_point_second) {
+              student.grade = gradePoint.letter_grade;
+              student.gpa = Number(gradePoint.grade_point) || 0;
+              student.comment = gradePoint.note || this.getDefaultComment(gradePoint.letter_grade);
+              foundGrade = true;
+              break;
+            }
           }
-        }
-        
-        if (!foundGrade) {
+          
+          if (!foundGrade) {
+            student.grade = 'F';
+            student.gpa = 0;
+            student.comment = 'Needs significant improvement. Please work harder.';
+          }
+        } else {
           student.grade = 'F';
           student.gpa = 0;
           student.comment = 'Needs significant improvement. Please work harder.';
         }
-      } else {
-        student.grade = 'F';
-        student.gpa = 0;
-        student.comment = 'Needs significant improvement. Please work harder.';
       }
     }
     
     return Array.from(studentMap.values());
   },
 
-  calculateSubjectGrade(obtainedMarks: number, fullMarks: number, gradeSetup: IGradeSetupData, subjectCount: number = 1): { grade: string; gpa: number } {
+  calculateSubjectGrade(obtainedMarks: number, fullMarks: number, gradeSetup: IGradeSetupData, shortCodes: IShortCodeProgressData[] = [], subjectCount: number = 1): { grade: string; gpa: number } {
     // Convert to numbers to ensure proper calculation
     const obtained = Number(obtainedMarks) || 0;
     const full = Number(fullMarks) || 0;
     
     // If no marks obtained or full marks is 0, return F grade with 0 GPA
     if (obtained <= 0 || full <= 0) {
+      return { grade: 'F', gpa: 0 };
+    }
+    
+    // Check if student failed any short code (pass mark check)
+    let hasFailedShortCode = false;
+    for (const shortCode of shortCodes) {
+      const passMark = Number(shortCode.pass_mark) || 0;
+      const obtainedMark = Number(shortCode.obtained_marks) || 0;
+      if (obtainedMark < passMark) {
+        hasFailedShortCode = true;
+        break;
+      }
+    }
+    
+    // If failed any short code, return F grade with 0 GPA
+    if (hasFailedShortCode) {
       return { grade: 'F', gpa: 0 };
     }
     

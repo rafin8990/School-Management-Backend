@@ -73,6 +73,9 @@ export type IMarkInputSaveData = {
   full_mark: number;
   short_code_marks: Record<string, number>;
   status: 'absent' | 'present';
+  total_mark: number;
+  grade: string;
+  gpa: number;
 };
 
 export type IMarkInputBulkSave = {

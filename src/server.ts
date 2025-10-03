@@ -20,6 +20,11 @@ async function bootstrap() {
     logger.info(`🚀 Server running on port ${config.port}`);
   });
 
+  // 🚀 OPTIMIZATION: Set server timeouts to handle long-running operations
+  server.timeout = 300000; // 5 minutes timeout for requests
+  server.keepAliveTimeout = 65000; // 65 seconds
+  server.headersTimeout = 66000; // 66 seconds
+
 
   const exitHandler = () => {
     if (server) {
