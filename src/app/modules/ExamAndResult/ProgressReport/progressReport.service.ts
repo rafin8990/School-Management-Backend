@@ -234,7 +234,7 @@ export const ProgressReportService = {
         mi.gpa,
         mi.short_code_marks,
         mi.status,
-        sem.total_marks as full_marks,
+        mi.full_mark as full_marks,
         sem.countable_marks,
         sem.pass_mark,
         sem.acceptance
@@ -272,7 +272,7 @@ export const ProgressReportService = {
     
     // Get short code specific full marks mapping
     const shortCodeFullMarksQuery = `
-      SELECT short_code_id, total_marks
+      SELECT short_code_id, total_marks, pass_mark
       FROM set_exam_marks 
       WHERE school_id = $1 AND class_id = $2 AND class_exam_id = $3 AND year_id = $4
     `;
@@ -282,9 +282,12 @@ export const ProgressReportService = {
       filters.exam_id, 
       filters.year_id
     ]);
-    const shortCodeFullMarksMap = new Map<number, number>();
+    const shortCodeFullMarksMap = new Map<number, { total_marks: number; pass_mark: number }>();
     shortCodeFullMarksResult.rows.forEach(row => {
-      shortCodeFullMarksMap.set(row.short_code_id, row.total_marks);
+      shortCodeFullMarksMap.set(row.short_code_id, {
+        total_marks: row.total_marks,
+        pass_mark: row.pass_mark
+      });
     });
     
     // Group by student and then by subject
@@ -342,15 +345,15 @@ export const ProgressReportService = {
           processedShortCodes.add(shortCodeIdNum);
           const shortCodeName = shortCodeNamesMap.get(shortCodeIdNum) || `Code ${shortCodeId}`;
           
-          // Get full marks for this specific short code
-          const shortCodeFullMarks = shortCodeFullMarksMap.get(shortCodeIdNum) || 0;
+          // Get full marks and pass mark for this specific short code
+          const shortCodeData = shortCodeFullMarksMap.get(shortCodeIdNum) || { total_marks: 0, pass_mark: 0 };
           
           shortCodes.push({
             short_code_id: shortCodeIdNum,
             short_code_name: shortCodeName,
             obtained_marks: Number(marks) || 0,
-            full_marks: shortCodeFullMarks, // Full marks for this specific short code
-            pass_mark: row.pass_mark || 0,
+            full_marks: shortCodeData.total_marks, // Full marks for this specific short code
+            pass_mark: shortCodeData.pass_mark, // Pass mark for this specific short code
           });
         }
       }
@@ -364,7 +367,10 @@ export const ProgressReportService = {
         
         // Recalculate totals from all short codes
         existingSubject.total_marks = existingSubject.short_codes.reduce((sum, sc) => sum + (sc.obtained_marks || 0), 0);
-        existingSubject.full_marks = existingSubject.short_codes.reduce((sum, sc) => sum + (sc.full_marks || 0), 0);
+        const calculatedFullMarks = existingSubject.short_codes.reduce((sum, sc) => sum + (sc.full_marks || 0), 0);
+        
+        // Use the full_mark from mark_input if available, otherwise use calculated value
+        existingSubject.full_marks = row.full_marks || calculatedFullMarks;
         
         // Recalculate grade and GPA for this subject
         const subjectGradeResult = this.calculateSubjectGrade(existingSubject.total_marks, existingSubject.full_marks, gradeSetup, existingSubject.short_codes, 1);
@@ -375,15 +381,18 @@ export const ProgressReportService = {
         const totalFullMarks = shortCodes.reduce((sum, sc) => sum + (sc.full_marks || 0), 0);
         const totalObtainedMarks = shortCodes.reduce((sum, sc) => sum + (sc.obtained_marks || 0), 0);
         
+        // Use the full_mark from mark_input if available, otherwise calculate from short codes
+        const subjectFullMarks = row.full_marks || totalFullMarks;
+        
         // Calculate grade and GPA for this subject
-        const subjectGradeResult = this.calculateSubjectGrade(totalObtainedMarks, totalFullMarks, gradeSetup, shortCodes, 1);
+        const subjectGradeResult = this.calculateSubjectGrade(totalObtainedMarks, subjectFullMarks, gradeSetup, shortCodes, 1);
         
         const subjectData: ISubjectProgressData = {
           subject_id: row.subject_id,
           subject_name: row.subject_name,
           short_codes: shortCodes,
           total_marks: totalObtainedMarks,
-          full_marks: totalFullMarks,
+          full_marks: subjectFullMarks,
           grade: subjectGradeResult.grade,
           gpa: subjectGradeResult.gpa,
           highest_marks: 0, // Will be calculated later
@@ -403,9 +412,9 @@ export const ProgressReportService = {
       let hasFailedAnySubject = false;
       
       for (const subject of student.subjects) {
-        totalMarks += subject.total_marks;
-        totalFullMarks += subject.full_marks;
-        totalGpa += subject.gpa;
+        totalMarks += Number(subject.total_marks) || 0;
+        totalFullMarks += Number(subject.full_marks) || 0;
+        totalGpa += Number(subject.gpa) || 0;
         subjectCount++;
         
         // Check if student failed this subject (grade is F)
@@ -414,8 +423,8 @@ export const ProgressReportService = {
         }
       }
       
-      student.total_marks = totalMarks;
-      student.total_full_marks = totalFullMarks;
+      student.total_marks = Number(totalMarks) || 0;
+      student.total_full_marks = Number(totalFullMarks) || 0;
       
       // If failed any subject, total grade is F and GPA is 0
       if (hasFailedAnySubject) {
@@ -452,6 +461,9 @@ export const ProgressReportService = {
           student.comment = 'Needs significant improvement. Please work harder.';
         }
       }
+      
+      // Ensure GPA is properly set as number
+      student.gpa = Number(student.gpa) || 0;
     }
     
     return Array.from(studentMap.values());
@@ -467,10 +479,24 @@ export const ProgressReportService = {
       return { grade: 'F', gpa: 0 };
     }
     
-    // Check if student failed any short code (pass mark check)
+    // Calculate percentage-based pass marks for each short code
+    const calculatePercentageBasedPassMark = (totalMarks: number): number => {
+      const rawPass = totalMarks * 0.33;
+      const fractional = rawPass - Math.floor(rawPass);
+      
+      // If fractional part is >= 0.5, round up (ceil), otherwise round down (floor)
+      if (fractional >= 0.5) {
+        return Math.ceil(rawPass);
+      } else {
+        return Math.floor(rawPass);
+      }
+    };
+
+    // Check if student failed any short code using percentage-based pass marks
     let hasFailedShortCode = false;
     for (const shortCode of shortCodes) {
-      const passMark = Number(shortCode.pass_mark) || 0;
+      const totalMarks = Number(shortCode.full_marks) || 0;
+      const passMark = calculatePercentageBasedPassMark(totalMarks);
       const obtainedMark = Number(shortCode.obtained_marks) || 0;
       if (obtainedMark < passMark) {
         hasFailedShortCode = true;

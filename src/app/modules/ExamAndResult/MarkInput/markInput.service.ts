@@ -862,32 +862,92 @@ const searchStudentsForMarkInput = async (params: IMarkInputSearchParams): Promi
 
   const studentsResult = await pool.query(studentsQuery, values);
 
-  return studentsResult.rows.map((row: any) => ({
-    student_id: row.student_id,
-    student_name_en: row.student_name_en,
-    student_id_code: row.student_id_code,
-    roll: row.roll,
-    group_id: row.group_id,
-    section_id: row.section_id,
-    shift_id: row.shift_id,
-    class_name: row.class_name,
-    subject_name: row.subject_name,
-    short_codes: shortCodesResult.rows,
-    existing_marks: row.existing_mark_id ? {
-      id: row.existing_mark_id,
+  // Get current grade setup for recalculation
+  const gradeSetup = await getOrCreateDefaultGradeSetup(class_id, exam_id, school_id);
+
+  return studentsResult.rows.map((row: any) => {
+    let existingMarks = undefined;
+    
+    if (row.existing_mark_id) {
+      // Recalculate grade and GPA with current grade setup
+      const shortCodeMarks = row.short_code_marks || {};
+      
+      // Calculate weighted total for grade calculation
+      let weightedTotal = 0;
+      let hasFailedShortCode = false;
+      
+      // Calculate percentage-based pass marks for each short code
+      const calculatePercentageBasedPassMark = (totalMarks: number): number => {
+        const rawPass = totalMarks * 0.33;
+        const fractional = rawPass - Math.floor(rawPass);
+        
+        // If fractional part is >= 0.5, round up (ceil), otherwise round down (floor)
+        if (fractional >= 0.5) {
+          return Math.ceil(rawPass);
+        } else {
+          return Math.floor(rawPass);
+        }
+      };
+
+      for (const shortCode of shortCodesResult.rows) {
+        const mark = asNumber(shortCodeMarks[shortCode.short_code_id] ?? 0);
+        const passMark = calculatePercentageBasedPassMark(shortCode.total_marks);
+        
+        // Check if failed any short code
+        if (mark < passMark) {
+          hasFailedShortCode = true;
+        }
+        
+        weightedTotal += mark * shortCode.acceptance;
+      }
+
+      // Calculate new grade and GPA
+      let newGrade = 'F';
+      let newGpa = 0.0;
+      
+      if (!hasFailedShortCode) {
+        const fullMarks = shortCodesResult.rows.reduce((sum, sc) => sum + sc.total_marks, 0);
+        const percentage = fullMarks > 0 ? (weightedTotal / fullMarks) * 100 : 0;
+        
+        for (const point of gradeSetup.grade_points) {
+          if (percentage >= point.mark_point_first && percentage <= point.mark_point_second) {
+            newGrade = point.grade;
+            newGpa = point.gpa;
+            break;
+          }
+        }
+      }
+
+      existingMarks = {
+        id: row.existing_mark_id,
+        student_id: row.student_id,
+        class_id,
+        subject_id,
+        exam_id,
+        year_id,
+        school_id,
+        short_code_marks: shortCodeMarks,
+        status: row.existing_status || 'present',
+        total_mark: asNumber(row.total_mark),
+        grade: newGrade,
+        gpa: newGpa
+      };
+    }
+
+    return {
       student_id: row.student_id,
-      class_id,
-      subject_id,
-      exam_id,
-      year_id,
-      school_id,
-      short_code_marks: row.short_code_marks || {},
-      status: row.existing_status || 'present',
-      total_mark: asNumber(row.total_mark),
-      grade: row.grade,
-      gpa: asNumber(row.gpa)
-    } : undefined
-  }));
+      student_name_en: row.student_name_en,
+      student_id_code: row.student_id_code,
+      roll: row.roll,
+      group_id: row.group_id,
+      section_id: row.section_id,
+      shift_id: row.shift_id,
+      class_name: row.class_name,
+      subject_name: row.subject_name,
+      short_codes: shortCodesResult.rows,
+      existing_marks: existingMarks
+    };
+  });
 };
 
 // Get or create default grade setup - PERCENTAGE BASED
@@ -979,7 +1039,7 @@ const saveMarkInput = async (data: IMarkInputBulkSave): Promise<IMarkInput[]> =>
 
     // 🚀 OPTIMIZATION 1: Get short codes once for all students
     const shortCodesQuery = `
-      SELECT sc.id, sem.acceptance, sem.pass_mark
+      SELECT sc.id, sem.acceptance, sem.pass_mark, sem.total_marks
       FROM set_exam_marks sem
       JOIN short_codes sc ON sem.short_code_id = sc.id
       WHERE sem.class_id = $1
@@ -994,7 +1054,8 @@ const saveMarkInput = async (data: IMarkInputBulkSave): Promise<IMarkInput[]> =>
     const shortCodesMap = new Map(shortCodesResult.rows.map(row => [row.id, {
       id: row.id,
       acceptance: asNumber(row.acceptance),
-      pass_mark: asNumber(row.pass_mark)
+      pass_mark: asNumber(row.pass_mark),
+      total_marks: asNumber(row.total_marks)
     }]));
 
     // 🚀 OPTIMIZATION 2: Get grade setup once
@@ -1029,13 +1090,27 @@ const saveMarkInput = async (data: IMarkInputBulkSave): Promise<IMarkInput[]> =>
 
       // Fix: Only check for undefined/null, not string, for gpa (which is a number)
       if (!grade || gpa === undefined || gpa === null) {
-        // Check fail by short code
+        // Calculate percentage-based pass marks for each short code
+        const calculatePercentageBasedPassMark = (totalMarks: number): number => {
+          const rawPass = totalMarks * 0.33;
+          const fractional = rawPass - Math.floor(rawPass);
+          
+          // If fractional part is >= 0.5, round up (ceil), otherwise round down (floor)
+          if (fractional >= 0.5) {
+            return Math.ceil(rawPass);
+          } else {
+            return Math.floor(rawPass);
+          }
+        };
+
+        // Check fail by short code using percentage-based pass marks
         let hasFailedShortCode = false;
         let weightedTotal = 0;
 
         for (const [shortCodeId, sc] of shortCodesMap) {
           const mark = asNumber(short_code_marks?.[shortCodeId] ?? 0);
-          if (mark < sc.pass_mark) hasFailedShortCode = true;
+          const passMark = calculatePercentageBasedPassMark(sc.total_marks);
+          if (mark < passMark) hasFailedShortCode = true;
           weightedTotal += mark * sc.acceptance;
         }
 
@@ -1317,7 +1392,7 @@ const bulkUploadMarkInput = async (data: any): Promise<IMarkInput[]> => {
 
       // Get short codes to calculate weighted total and check pass marks
       const shortCodesQuery = `
-        SELECT sc.id, sem.acceptance, sem.pass_mark
+        SELECT sc.id, sem.acceptance, sem.pass_mark, sem.total_marks
         FROM set_exam_marks sem
         JOIN short_codes sc ON sem.short_code_id = sc.id
         WHERE sem.class_id = $1
@@ -1330,11 +1405,25 @@ const bulkUploadMarkInput = async (data: any): Promise<IMarkInput[]> => {
 
       const shortCodesResult = await pool.query(shortCodesQuery, [class_id, exam_id, subject_id, year_id, school_id]);
 
-      // Check if student has failed any short code
+      // Calculate percentage-based pass marks for each short code
+      const calculatePercentageBasedPassMark = (totalMarks: number): number => {
+        const rawPass = totalMarks * 0.33;
+        const fractional = rawPass - Math.floor(rawPass);
+        
+        // If fractional part is >= 0.5, round up (ceil), otherwise round down (floor)
+        if (fractional >= 0.5) {
+          return Math.ceil(rawPass);
+        } else {
+          return Math.floor(rawPass);
+        }
+      };
+
+      // Check if student has failed any short code using percentage-based pass marks
       let hasFailedShortCode = false;
       for (const shortCode of shortCodesResult.rows) {
         const mark = asNumber(short_code_marks?.[shortCode.id] ?? 0);
-        if (mark < asNumber(shortCode.pass_mark)) {
+        const passMark = calculatePercentageBasedPassMark(asNumber(shortCode.total_marks));
+        if (mark < passMark) {
           hasFailedShortCode = true;
           break;
         }
