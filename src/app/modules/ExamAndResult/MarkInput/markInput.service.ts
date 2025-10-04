@@ -806,6 +806,7 @@ const searchStudentsForMarkInput = async (params: IMarkInputSearchParams): Promi
     SELECT
       sc.id as short_code_id,
       sc.name as short_code_name,
+      sc.view_position,
       sem.total_marks,
       sem.pass_mark,
       sem.acceptance
@@ -817,7 +818,7 @@ const searchStudentsForMarkInput = async (params: IMarkInputSearchParams): Promi
       AND sem.year_id = $4
       AND sem.school_id = $5
       AND sem.status = 'active'
-    ORDER BY sc.name
+    ORDER BY sc.view_position ASC, sc.name ASC
   `;
 
   const shortCodesResult = await pool.query(shortCodesQuery, [class_id, exam_id, subject_id, year_id, school_id]);
@@ -878,7 +879,7 @@ const searchStudentsForMarkInput = async (params: IMarkInputSearchParams): Promi
       
       // Calculate percentage-based pass marks for each short code
       const calculatePercentageBasedPassMark = (totalMarks: number): number => {
-        const rawPass = totalMarks * 0.33;
+        const rawPass = totalMarks / 3;
         const fractional = rawPass - Math.floor(rawPass);
         
         // If fractional part is >= 0.5, round up (ceil), otherwise round down (floor)
@@ -1092,7 +1093,7 @@ const saveMarkInput = async (data: IMarkInputBulkSave): Promise<IMarkInput[]> =>
       if (!grade || gpa === undefined || gpa === null) {
         // Calculate percentage-based pass marks for each short code
         const calculatePercentageBasedPassMark = (totalMarks: number): number => {
-          const rawPass = totalMarks * 0.33;
+          const rawPass = totalMarks / 3;
           const fractional = rawPass - Math.floor(rawPass);
           
           // If fractional part is >= 0.5, round up (ceil), otherwise round down (floor)
@@ -1407,7 +1408,7 @@ const bulkUploadMarkInput = async (data: any): Promise<IMarkInput[]> => {
 
       // Calculate percentage-based pass marks for each short code
       const calculatePercentageBasedPassMark = (totalMarks: number): number => {
-        const rawPass = totalMarks * 0.33;
+        const rawPass = totalMarks / 3;
         const fractional = rawPass - Math.floor(rawPass);
         
         // If fractional part is >= 0.5, round up (ceil), otherwise round down (floor)

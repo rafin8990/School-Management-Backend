@@ -58,6 +58,7 @@ export type IMarkInputStudentData = {
   short_codes: Array<{
     short_code_id: number;
     short_code_name: string;
+    view_position?: number;
     total_marks: number;
     pass_mark: number;
     acceptance: number;

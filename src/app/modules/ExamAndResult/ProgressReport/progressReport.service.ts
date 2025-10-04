@@ -479,9 +479,9 @@ export const ProgressReportService = {
       return { grade: 'F', gpa: 0 };
     }
     
-    // Calculate percentage-based pass marks for each short code
+    // Calculate pass marks for each short code (countable marks / 3)
     const calculatePercentageBasedPassMark = (totalMarks: number): number => {
-      const rawPass = totalMarks * 0.33;
+      const rawPass = totalMarks / 3;
       const fractional = rawPass - Math.floor(rawPass);
       
       // If fractional part is >= 0.5, round up (ceil), otherwise round down (floor)

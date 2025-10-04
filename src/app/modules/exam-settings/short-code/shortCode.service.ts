@@ -19,7 +19,7 @@ const getAll = async (schoolId: number, status?: 'active'|'inactive'): Promise<I
     values.push(status);
   }
   const where = `WHERE ${conditions.join(' AND ')}`;
-  const res = await pool.query(`SELECT * FROM short_codes ${where} ORDER BY mark_position ASC;`, values);
+  const res = await pool.query(`SELECT * FROM short_codes ${where} ORDER BY view_position ASC, mark_position ASC;`, values);
   return res.rows;
 };
 
